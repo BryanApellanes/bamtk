@@ -1,0 +1,69 @@
+[submodule "submodules/bam.base"]
+	path = submodules/bam.base
+	url = git@github.com:BryanApellanes/bam.base.git
+[submodule "submodules/bam.base.services"]
+	path = submodules/bam.base.services
+	url = git@github.com:BryanApellanes/bam.base.services.git
+[submodule "submodules/bam.caching"]
+	path = submodules/bam.caching
+	url = git@github.com:BryanApellanes/bam.caching.git
+[submodule "submodules/bam.commandline"]
+	path = submodules/bam.commandline
+	url = git@github.com:BryanApellanes/bam.commandline.git
+[submodule "submodules/bam.configuration"]
+	path = submodules/bam.configuration
+	url = git@github.com:BryanApellanes/bam.configuration.git
+[submodule "submodules/bam.data"]
+	path = submodules/bam.data
+	url = git@github.com:BryanApellanes/bam.data.git
+[submodule "submodules/bam.data.backup"]
+	path = submodules/bam.data.backup
+	url = git@github.com:BryanApellanes/bam.data.backup.git
+[submodule "submodules/bam.data.repositories"]
+	path = submodules/bam.data.repositories
+	url = git@github.com:BryanApellanes/bam.data.repositories.git
+[submodule "submodules/bam.data.schema"]
+	path = submodules/bam.data.schema
+	url = git@github.com:BryanApellanes/bam.data.schema.git
+[submodule "submodules/bam.encryption"]
+	path = submodules/bam.encryption
+	url = git@github.com:BryanApellanes/bam.encryption.git
+[submodule "submodules/bam.generators"]
+	path = submodules/bam.generators
+	url = git@github.com:BryanApellanes/bam.generators.git
+[submodule "submodules/bam.javascript"]
+	path = submodules/bam.javascript
+	url = git@github.com:BryanApellanes/bam.javascript.git
+[submodule "submodules/bam.logging"]
+	path = submodules/bam.logging
+	url = git@github.com:BryanApellanes/bam.logging.git
+[submodule "submodules/bam.logging.counters"]
+	path = submodules/bam.logging.counters
+	url = git@github.com:BryanApellanes/bam.logging.counters.git
+[submodule "submodules/bam.storage"]
+	path = submodules/bam.storage
+	url = git@github.com:BryanApellanes/bam.storage.git
+[submodule "submodules/bam.sys"]
+	path = submodules/bam.sys
+	url = git@github.com:BryanApellanes/bam.sys.git
+[submodule "submodules/bam.testing"]
+	path = submodules/bam.testing
+	url = git@github.com:BryanApellanes/bam.testing.git
+[submodule "submodules/bam.useraccounts"]
+	path = submodules/bam.useraccounts
+	url = git@github.com:BryanApellanes/bam.useraccounts.git
+[submodule "submodules/bamtest"]
+	path = submodules/bamtest
+	url = git@github.com:BryanApellanes/bamtest.git
+[submodule "submodules/bamdb"]
+	path = submodules/bamdb
+	url = git@github.com:BryanApellanes/bamdb.git
+[submodule "submodules/bam.sys.console"]
+	path = submodules/bam.sys.console
+	url = git@github.com:BryanApellanes/bam.sys.console.git
+[submodule "submodules/bambot"]
+	path = submodules/bambot
+	url = git@github.com:BryanApellanes/bambot.git
+[submodule "submodules/bam.remote"]
+	path = submodules/bam.remote
+	url = git@github.com:BryanApellanes/Bam.Remote.git
