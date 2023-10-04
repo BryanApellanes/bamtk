@@ -67,3 +67,6 @@
 [submodule "submodules/bam.remote"]
 	path = submodules/bam.remote
 	url = git@github.com:BryanApellanes/Bam.Remote.git
+[submodule "submodules/bam.automation"]
+	path = submodules/bam.automation
+	url = git@github.com:BryanApellanes/bam.automation.git
