@@ -70,3 +70,9 @@
 [submodule "submodules/bam.automation"]
 	path = submodules/bam.automation
 	url = git@github.com:BryanApellanes/bam.automation.git
+[submodule "submodules/bam.console"]
+	path = submodules/bam.console
+	url = git@github.com:BryanApellanes/bam.console.git
+[submodule "submodules/bam.shell"]
+	path = submodules/bam.shell
+	url = git@github.com:BryanApellanes/bam.shell.git
