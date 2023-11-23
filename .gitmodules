@@ -76,3 +76,6 @@
 [submodule "submodules/bam.shell"]
 	path = submodules/bam.shell
 	url = git@github.com:BryanApellanes/bam.shell.git
+[submodule "submodules/bam.application"]
+	path = submodules/bam.application
+	url = git@github.com:BryanApellanes/bam.application.git
