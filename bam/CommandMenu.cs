@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Bam
 {
+    [ConsoleMenu("code")]
     public class CommandMenu : ConsoleMenuContainer
     {
         public CommandMenu(ServiceRegistry serviceRegistry) : base(serviceRegistry)
@@ -19,10 +20,29 @@ namespace Bam
             return serviceRegistry;
         }
 
-        [ConsoleCommand]
-        public void Default()
+        [ConsoleCommand("testWithStringParameters")]
+        public void Test(string valueOne, string valueTwo)
         {
-            Message.PrintLine("This is the default method");
+            Message.PrintLine("valueOne = {0}, valueTwo = {1}", valueOne, valueTwo);
         }
+
+        [ConsoleCommand]
+        public void SomeRandomName()
+        {
+            Message.PrintLine("This is some random method");
+        }
+
+        [ConsoleCommand("generate")]
+        public void AnotherCommand()
+        {
+            Message.PrintLine("This is generate");
+        }
+
+        [ConsoleCommand("DEFAULT")]
+        public void TheDefault()
+        {
+            Message.PrintLine("This is the DEFAULT");
+        }
+
     }
 }

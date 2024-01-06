@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\bam\bam.csproj" />
+    <ProjectReference Include="..\submodules\bam.base\bam.base\bam.base.csproj" />
+    <ProjectReference Include="..\submodules\bam.console\bam.console\bam.console.csproj" />
+    <ProjectReference Include="..\submodules\bam.data.repositories\bam.data.repositories\bam.data.repositories.csproj" />
+    <ProjectReference Include="..\submodules\bam.data.schema\bam.data.schema\bam.data.schema.csproj" />
+    <ProjectReference Include="..\submodules\bam.data\bam.data\bam.data.csproj" />
+    <ProjectReference Include="..\submodules\bam.testing\bam.testing\bam.testing.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "bam": {
+      "commandName": "Project",
+      "commandLineArgs": "code testWithStringParameters --valueOne hello --valueTwo there"
+    }
+  }
+}

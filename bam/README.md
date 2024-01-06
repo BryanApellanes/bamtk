@@ -1,6 +1,24 @@
 # bam
 The `bam application management` tool provides a console/terminal/shell interface used to manage applications built on the `bam application management framework`.
 
+/* from scratch
+## Sign Up
+```
+bam signup --email user@email.com
+```
+
+## Create Application
+```
+bam app init
+```
+
+## Define Data Model
+```
+
+```
+
+/* --/
+
 ## Schema extraction
 To extract a schema from an existing database use the following command:
 ```
