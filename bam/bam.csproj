@@ -12,4 +12,8 @@
     <ProjectReference Include="..\submodules\bam.command\bam.command\bam.command.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="opt\" />
+  </ItemGroup>
+
 </Project>
