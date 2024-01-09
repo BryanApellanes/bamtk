@@ -32,10 +32,10 @@ namespace Bam
             Message.PrintLine("This is some random method");
         }
 
-        [ConsoleCommand("generate")]
+        [ConsoleCommand("another")]
         public void AnotherCommand()
         {
-            Message.PrintLine("This is generate");
+            Message.PrintLine("This is another command");
         }
 
         [ConsoleCommand("DEFAULT")]

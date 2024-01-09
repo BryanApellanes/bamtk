@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\bam\bam.csproj" />
     <ProjectReference Include="..\submodules\bam.base\bam.base\bam.base.csproj" />
+    <ProjectReference Include="..\submodules\bam.command\bam.command\bam.command.csproj" />
     <ProjectReference Include="..\submodules\bam.console\bam.console\bam.console.csproj" />
     <ProjectReference Include="..\submodules\bam.data.repositories\bam.data.repositories\bam.data.repositories.csproj" />
     <ProjectReference Include="..\submodules\bam.data.schema\bam.data.schema\bam.data.schema.csproj" />
