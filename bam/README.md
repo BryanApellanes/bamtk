@@ -1,25 +1,63 @@
-# bam
+# Bam Docs
 The `bam application management` tool provides a console/terminal/shell interface used to manage applications built on the `bam application management framework`.
 
-/* from scratch
+## Set up
+### Prerequisites
+- git
+- docker
+
+### optional
+- protoc - for protocol buffers support
+
+### dotnet
+```
+dotnet tool install -g bam
+```
+
+### nodejs
+```
+npm instgall bam
+```
+
+### python
+```
+pip install bam
+```
+
 ## Sign Up
 ```
-bam signup --email user@email.com
+bam signup --email {emailaddress}
+```
+
+> NOTES: <br />
+alias for: <br /> &nbsp;
+bam org create --email {emailaddress} [--username {username}]
+
+## Authentication
+```
+bam authenticate
+```
+
+> NOTES: <br /> &nbsp;
+alias for: bam request authentication --user {username}
+
+## Show
+```
+bam show
+```
+
+> NOTES: <br />&nbsp;
+This command should show the current configuration.  Define a configuration object that is yaml serialized to .bam/.config
+
+## Whoami
+```
+bam whoami
 ```
 
 ## Create Application
 ```
-bam app init
+bam app create --name {your-app-name}
 ```
 
-## Register Data Schema
-```
-bam data register --schemaName {logical_schema_name} --from "{semicolon_delimited_data_class_assemblies}"
-```
+## Main.md
 
-## Register Services
-```
-bam services register --from "{semicolon_delimited_service_class_assemblies}"
-```
-
-/* --/
