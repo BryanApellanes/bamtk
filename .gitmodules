@@ -91,3 +91,9 @@
 [submodule "submodules/bam.data.dynamic"]
 	path = submodules/bam.data.dynamic
 	url = git@github.com:BryanApellanes/bam.data.dynamic.git
+[submodule "submodules/bamserver"]
+	path = submodules/bamserver
+	url = git@github.com:BryanApellanes/bamserver.git
+[submodule "submodules/bam.protocol"]
+	path = submodules/bam.protocol
+	url = git@github.com:BryanApellanes/bam.protocol.git
