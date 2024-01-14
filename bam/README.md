@@ -61,3 +61,10 @@ bam app create --name {your-app-name}
 
 ## Main.md
 
+```bam://*/data
+
+typeName: Item
+id: ulong
+name: string
+description: 
+```
