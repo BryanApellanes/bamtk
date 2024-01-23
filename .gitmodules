@@ -97,3 +97,6 @@
 [submodule "submodules/bam.protocol"]
 	path = submodules/bam.protocol
 	url = git@github.com:BryanApellanes/bam.protocol.git
+[submodule "submodules/bam.server"]
+	path = submodules/bam.server
+	url = git@github.com:BryanApellanes/bam.server.git
