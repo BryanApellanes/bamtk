@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 namespace Bam
 {
     [ConsoleMenu("code")]
-    public class CommandMenu : ConsoleMenuContainer
+    public class ConsoleCommands : ConsoleMenuContainer
     {
-        public CommandMenu(ServiceRegistry serviceRegistry) : base(serviceRegistry)
+        public ConsoleCommands(ServiceRegistry serviceRegistry) : base(serviceRegistry)
         {
         }
 

@@ -135,17 +135,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.shell.tests", "submodul
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.command.tests", "submodules\bam.command\bam.command.tests\bam.command.tests.csproj", "{43C585FC-7DD1-4551-8547-C97453D6554C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.data.mssql", "submodules\bam.data\bam.data.mssql\bam.data.mssql.csproj", "{83C91953-91B0-4F04-B57C-3AF7040F7A5E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.data.mssql", "submodules\bam.data\bam.data.mssql\bam.data.mssql.csproj", "{83C91953-91B0-4F04-B57C-3AF7040F7A5E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.data.config", "submodules\bam.data\bam.data.config\bam.data.config.csproj", "{29580C3E-44F7-46BA-9018-80CB493608DC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.data.config", "submodules\bam.data\bam.data.config\bam.data.config.csproj", "{29580C3E-44F7-46BA-9018-80CB493608DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.data.postgres", "submodules\bam.data\bam.data.postgres\bam.data.postgres.csproj", "{FD1FADE7-F364-4AC7-8B15-8C072479376C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.data.postgres", "submodules\bam.data\bam.data.postgres\bam.data.postgres.csproj", "{FD1FADE7-F364-4AC7-8B15-8C072479376C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.data.mysql", "submodules\bam.data\bam.data.mysql\bam.data.mysql.csproj", "{D6A16801-ABFD-4707-94ED-8BF4A5EBD3D6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.data.mysql", "submodules\bam.data\bam.data.mysql\bam.data.mysql.csproj", "{D6A16801-ABFD-4707-94ED-8BF4A5EBD3D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.data.oracle", "submodules\bam.data\bam.data.oracle\bam.data.oracle.csproj", "{E773B8A5-AD19-4B2A-BCF3-74642A478A1A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.data.oracle", "submodules\bam.data\bam.data.oracle\bam.data.oracle.csproj", "{E773B8A5-AD19-4B2A-BCF3-74642A478A1A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.data.firebird", "submodules\bam.data\bam.data.firebird\bam.data.firebird.csproj", "{85F9920C-99EA-4745-AFB5-776B66BBCF3F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.data.firebird", "submodules\bam.data\bam.data.firebird\bam.data.firebird.csproj", "{85F9920C-99EA-4745-AFB5-776B66BBCF3F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bam.server", "bam.server", "{EE3E7322-5796-41AE-B092-D19AFAFF1F83}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.server", "submodules\bam.server\bam.server\bam.server.csproj", "{394DDF89-5A4E-43D0-9808-F917A335F77F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -329,6 +333,10 @@ Global
 		{85F9920C-99EA-4745-AFB5-776B66BBCF3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{85F9920C-99EA-4745-AFB5-776B66BBCF3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{85F9920C-99EA-4745-AFB5-776B66BBCF3F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{394DDF89-5A4E-43D0-9808-F917A335F77F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{394DDF89-5A4E-43D0-9808-F917A335F77F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{394DDF89-5A4E-43D0-9808-F917A335F77F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{394DDF89-5A4E-43D0-9808-F917A335F77F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -401,6 +409,8 @@ Global
 		{D6A16801-ABFD-4707-94ED-8BF4A5EBD3D6} = {008633D5-BA95-4023-9CB4-C138D85AA712}
 		{E773B8A5-AD19-4B2A-BCF3-74642A478A1A} = {008633D5-BA95-4023-9CB4-C138D85AA712}
 		{85F9920C-99EA-4745-AFB5-776B66BBCF3F} = {008633D5-BA95-4023-9CB4-C138D85AA712}
+		{EE3E7322-5796-41AE-B092-D19AFAFF1F83} = {AE19C89E-37FD-4B04-AAA3-C482619D5F6A}
+		{394DDF89-5A4E-43D0-9808-F917A335F77F} = {EE3E7322-5796-41AE-B092-D19AFAFF1F83}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {128B88FB-74C7-4070-AD2C-1D67B387BD42}

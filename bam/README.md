@@ -16,7 +16,7 @@ dotnet tool install -g bam
 
 ### nodejs
 ```
-npm instgall bam
+npm install bam
 ```
 
 ### python
