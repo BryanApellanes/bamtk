@@ -13,6 +13,7 @@
     <mapping directory="$PROJECT_DIR$/submodules/bam.console" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.data" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.data.backup" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/submodules/bam.data.dynamic" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.data.repositories" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.data.schema" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.encryption" vcs="Git" />
@@ -20,7 +21,9 @@
     <mapping directory="$PROJECT_DIR$/submodules/bam.javascript" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.logging" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.logging.counters" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/submodules/bam.protocol" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.remote" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/submodules/bam.server" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.services" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.shell" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bam.storage" vcs="Git" />
@@ -29,6 +32,7 @@
     <mapping directory="$PROJECT_DIR$/submodules/bam.useraccounts" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bambot" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bamdb" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/submodules/bamserver" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bamsvc" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/submodules/bamtest" vcs="Git" />
   </component>

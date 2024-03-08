@@ -151,6 +151,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bam.server", "bam.server", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bam.server", "submodules\bam.server\bam.server\bam.server.csproj", "{394DDF89-5A4E-43D0-9808-F917A335F77F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bam.openapi", "bam.openapi", "{0BB93F4E-B47B-4B4B-B386-8E21073EE311}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.openapi", "submodules\bam.openapi\bam.openapi\bam.openapi.csproj", "{F31311AB-AD73-47DE-B510-D22E4410A2D8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -337,6 +341,10 @@ Global
 		{394DDF89-5A4E-43D0-9808-F917A335F77F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{394DDF89-5A4E-43D0-9808-F917A335F77F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{394DDF89-5A4E-43D0-9808-F917A335F77F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F31311AB-AD73-47DE-B510-D22E4410A2D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F31311AB-AD73-47DE-B510-D22E4410A2D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F31311AB-AD73-47DE-B510-D22E4410A2D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F31311AB-AD73-47DE-B510-D22E4410A2D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -411,6 +419,8 @@ Global
 		{85F9920C-99EA-4745-AFB5-776B66BBCF3F} = {008633D5-BA95-4023-9CB4-C138D85AA712}
 		{EE3E7322-5796-41AE-B092-D19AFAFF1F83} = {AE19C89E-37FD-4B04-AAA3-C482619D5F6A}
 		{394DDF89-5A4E-43D0-9808-F917A335F77F} = {EE3E7322-5796-41AE-B092-D19AFAFF1F83}
+		{0BB93F4E-B47B-4B4B-B386-8E21073EE311} = {AE19C89E-37FD-4B04-AAA3-C482619D5F6A}
+		{F31311AB-AD73-47DE-B510-D22E4410A2D8} = {0BB93F4E-B47B-4B4B-B386-8E21073EE311}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {128B88FB-74C7-4070-AD2C-1D67B387BD42}

@@ -100,3 +100,6 @@
 [submodule "submodules/bam.server"]
 	path = submodules/bam.server
 	url = git@github.com:BryanApellanes/bam.server.git
+[submodule "submodules/bam.openapi"]
+	path = submodules/bam.openapi
+	url = git@github.com:BryanApellanes/bam.openapi.git
