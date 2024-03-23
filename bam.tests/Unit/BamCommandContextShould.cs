@@ -50,7 +50,7 @@ namespace Bam.Tests.Unit
 
             IBrokeredCommandContextResolver commandContextResolver = svcRegistry.Get<IBrokeredCommandContextResolver>();
 
-            // The default type is ProcessCommandContextResolver set by BamCommandContext.GetServiceRegitry()
+            // The default type is ProcessCommandContextResolver set by BamCommandContext.GetServiceRegistry()
             commandContextResolver.ShouldBeOfType<ProcessCommandContextResolver>();
 
             svcRegistry.For<IBrokeredCommandContextResolver>().Use(() => new TestCommandContextResolver());
