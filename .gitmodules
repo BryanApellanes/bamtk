@@ -103,3 +103,12 @@
 [submodule "submodules/bam.openapi"]
 	path = submodules/bam.openapi
 	url = git@github.com:BryanApellanes/bam.openapi.git
+[submodule "submodules/bamapi"]
+	path = submodules/bamapi
+	url = git@github.com:BryanApellanes/bamapi.git
+[submodule "submodules/bam.presentation"]
+	path = submodules/bam.presentation
+	url = git@github.com:BryanApellanes/bam.presentation.git
+[submodule "submodules/bamfs"]
+	path = submodules/bamfs
+	url = git@github.com:BryanApellanes/bamfs.git
