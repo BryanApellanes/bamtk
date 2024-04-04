@@ -112,3 +112,6 @@
 [submodule "submodules/bamfs"]
 	path = submodules/bamfs
 	url = git@github.com:BryanApellanes/bamfs.git
+[submodule "submodules/bam.data.objects"]
+	path = submodules/bam.data.objects
+	url = git@github.com:BryanApellanes/bam.data.objects.git
