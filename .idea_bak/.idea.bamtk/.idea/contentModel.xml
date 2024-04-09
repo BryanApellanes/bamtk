@@ -1,0 +1,1559 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\bam\nuget\packages" t="ExcludeRecursive" />
+    <e p="C:\src\repos\bam.framework\submodules\bam.testing\bam.testing\Tests\bam.testing.tests" t="IncludeRecursive">
+      <e p="bam.testing.tests.csproj" t="IncludeRecursive" />
+    </e>
+    <e p="C:\src\repos\bamtk" t="IncludeFlat">
+      <e p="bam" t="IncludeRecursive">
+        <e p="bam.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net6.0" t="Include">
+              <e p="bam.AssemblyInfo.cs" t="Include" />
+              <e p="bam.GlobalUsings.g.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Program.cs" t="Include" />
+      </e>
+      <e p="bamtk.sln" t="IncludeFlat" />
+      <e p="framework" t="Include">
+        <e p="bam.sys" t="Include" />
+        <e p="bam.testing" t="Include" />
+      </e>
+      <e p="submodules\bam.base\bam.base" t="IncludeRecursive">
+        <e p="_partial" t="Include">
+          <e p="AdHocCSharpCompiler.cs" t="Include" />
+          <e p="RuntimeSettings.cs" t="Include" />
+          <e p="UserUtil.cs" t="Include" />
+        </e>
+        <e p="ActionExtensions.cs" t="Include" />
+        <e p="AdHocCSharpCompiler.cs" t="Include" />
+        <e p="Analytics" t="Include">
+          <e p="DeletedDiffReportToken.cs" t="Include" />
+          <e p="Diff.cs" t="Include" />
+          <e p="DiffReport.cs" t="Include" />
+          <e p="DiffReportFormatter.cs" t="Include" />
+          <e p="DiffReportToken.cs" t="Include" />
+          <e p="DiffType.cs" t="Include" />
+          <e p="InsertedDiffReportToken.cs" t="Include" />
+        </e>
+        <e p="Application" t="Include">
+          <e p="AppKind.cs" t="Include" />
+        </e>
+        <e p="ApplicationDiagnosticInfo.cs" t="Include" />
+        <e p="ApplicationNameProvider.cs" t="Include" />
+        <e p="Args.cs" t="Include" />
+        <e p="AssemblyCommitAttribute.cs" t="Include" />
+        <e p="AssemblyExtensions.cs" t="Include" />
+        <e p="AssemblyInfo.cs" t="Include" />
+        <e p="BackgroundThreadQueue.cs" t="Include" />
+        <e p="BackgroundThreadQueueEventArgs.cs" t="Include" />
+        <e p="bam.base.csproj" t="IncludeRecursive" />
+        <e p="BamDir.cs" t="Include" />
+        <e p="BamEnvironmentVariables.cs" t="Include" />
+        <e p="BamHome.cs" t="Include" />
+        <e p="BamProfile.cs" t="Include" />
+        <e p="ByteExtensions.cs" t="Include" />
+        <e p="ByteReverseTransformerPipeline.cs" t="Include" />
+        <e p="ByteTransformerPipeline.cs" t="Include" />
+        <e p="CharExtensions.cs" t="Include" />
+        <e p="CommandLine" t="Include">
+          <e p="ConsoleColorCombo.cs" t="Include" />
+          <e p="ConsoleDiffReportFormatter.cs" t="Include" />
+          <e p="ConsoleLogger.cs" t="Include" />
+          <e p="ConsoleMessage.cs" t="Include" />
+          <e p="ConsoleMessageDelegate.cs" t="Include" />
+          <e p="IConsoleMessageHandler.cs" t="Include" />
+          <e p="Message.cs" t="Include" />
+          <e p="ProcessExitEventArgs.cs" t="Include" />
+        </e>
+        <e p="CompilationException.cs" t="Include" />
+        <e p="CompilationExceptionInfo.cs" t="Include" />
+        <e p="Config.cs" t="Include" />
+        <e p="ConfigChangedEventArgs.cs" t="Include" />
+        <e p="Configuration" t="Include">
+          <e p="ConfigurationSources.cs" t="Include" />
+          <e p="ConfigurationValue.cs" t="Include" />
+          <e p="DefaultConfiguration.cs" t="Include" />
+          <e p="IConfigurationProvider.cs" t="Include" />
+          <e p="IConfigurationResolver.cs" t="Include" />
+          <e p="InvalidIHasRequiredPropertiesImplementationException.cs" t="Include" />
+          <e p="RequiredPropertiesNotSetException.cs" t="Include" />
+          <e p="StaticApplicationNameProvider.cs" t="Include" />
+        </e>
+        <e p="ConstructFailedException.cs" t="Include" />
+        <e p="CoreServices" t="Include">
+          <e p="AssemblyManagement" t="Include">
+            <e p="IAssemblyDescriptor.cs" t="Include" />
+            <e p="IAssemblyReferenceDescriptor.cs" t="Include" />
+            <e p="IAssemblyResolver.cs" t="Include" />
+            <e p="IAssemblyService.cs" t="Include" />
+            <e p="INetStandardVersionResolver.cs" t="Include" />
+            <e p="IPackageVersionResolver.cs" t="Include" />
+            <e p="IProcessRuntimeDescriptor.cs" t="Include" />
+            <e p="IReferenceAssemblyResolver.cs" t="Include" />
+            <e p="ITypeIdResolver.cs" t="Include" />
+            <e p="LinuxReferenceAssemblyResolver.cs" t="Include" />
+            <e p="NetStandardVersionResolver.cs" t="Include" />
+            <e p="NugetReferenceAssemblyResolver.cs" t="Include" />
+            <e p="OsxReferenceAssemblyResolver.cs" t="Include" />
+            <e p="PackageVersionNotFoundException.cs" t="Include" />
+            <e p="PackageVersionResolver.cs" t="Include" />
+            <e p="ProfileReferenceAssemblyResolver.cs" t="Include" />
+            <e p="ReferenceAssemblyNotFoundException.cs" t="Include" />
+            <e p="RuntimeSettingsConfigReferenceAssemblyResolver.cs" t="Include" />
+          </e>
+          <e p="FluentServiceRegistryContext.cs" t="Include" />
+          <e p="ServiceRegistry.cs" t="Include" />
+          <e p="ServiceRegistryContainerAttribute.cs" t="Include" />
+          <e p="ServiceRegistryLoaderAttribute.cs" t="Include" />
+        </e>
+        <e p="CustomAttributeExtension.cs" t="Include" />
+        <e p="CustomAttributeTypeDescriptor.cs" t="Include" />
+        <e p="Data" t="Include">
+          <e p="AssignValue.cs" t="Include" />
+          <e p="ColumnAttribute.cs" t="Include" />
+          <e p="ColumnNameListProvider.cs" t="Include" />
+          <e p="DaoDelegate.cs" t="Include" />
+          <e p="DatabaseInitializationResult.cs" t="Include" />
+          <e p="DataTypes.cs" t="Include" />
+          <e p="EnsureSchemaStatus.cs" t="Include" />
+          <e p="ForeignKeyAttribute.cs" t="Include" />
+          <e p="FormatPart.cs" t="Include" />
+          <e p="IAddable.cs" t="Include" />
+          <e p="ICommittable.cs" t="Include" />
+          <e p="ICommittableDelegate.cs" t="Include" />
+          <e p="IConnectionStringResolver.cs" t="Include" />
+          <e p="IDao.cs" t="Include" />
+          <e p="IDaoProxyRegistration.cs" t="Include" />
+          <e p="IDaoRepository.cs" t="Include" />
+          <e p="IDaoTransaction.cs" t="Include" />
+          <e p="IDatabase.cs" t="Include" />
+          <e p="IDatabaseInitializer.cs" t="Include" />
+          <e p="IDatabaseProvider.cs" t="Include" />
+          <e p="IDataDirectoryProvider.cs" t="Include" />
+          <e p="IDataTypeTranslator.cs" t="Include" />
+          <e p="IDbConnectionManager.cs" t="Include" />
+          <e p="IDeleteable.cs" t="Include" />
+          <e p="Identifiers.cs" t="Include" />
+          <e p="IFilterToken.cs" t="Include" />
+          <e p="IFormatPart.cs" t="Include" />
+          <e p="IHasConnectionStringResolver.cs" t="Include" />
+          <e p="IHasDataRow.cs" t="Include" />
+          <e p="IHasDataTable.cs" t="Include" />
+          <e p="IHasFilters.cs" t="Include" />
+          <e p="IHasFormatParts.cs" t="Include" />
+          <e p="IHasKey.cs" t="Include" />
+          <e p="IHasParameterInfos.cs" t="Include" />
+          <e p="IHasUniversalDeterministicId.cs" t="Include" />
+          <e p="IHydrator.cs" t="Include" />
+          <e p="ILoadable.cs" t="Include" />
+          <e p="IOrderBy.cs" t="Include" />
+          <e p="IParameterBuilder.cs" t="Include" />
+          <e p="IParameterInfo.cs" t="Include" />
+          <e p="IParameterInfoParser.cs" t="Include" />
+          <e p="IQuery.cs" t="Include" />
+          <e p="IQueryFilter.cs" t="Include" />
+          <e p="IQueryResult.cs" t="Include" />
+          <e p="IQuerySet.cs" t="Include" />
+          <e p="IQuerySetResults.cs" t="Include" />
+          <e p="IRegistrarCaller.cs" t="Include" />
+          <e p="IRepositoryProvider.cs" t="Include" />
+          <e p="ISchemaWriter.cs" t="Include" />
+          <e p="ISqlStringBuilder.cs" t="Include" />
+          <e p="IUniversalIdResolver.cs" t="Include" />
+          <e p="KeyColumnAttribute.cs" t="Include" />
+          <e p="Repositories" t="Include">
+            <e p="_partial" t="Include">
+              <e p="Meta.cs" t="Include" />
+            </e>
+            <e p="CompositeKeyAttribute.cs" t="Include" />
+            <e p="CrudMethods.cs" t="Include" />
+            <e p="CrudResponse.cs" t="Include" />
+            <e p="DaoInfo.cs" t="Include" />
+            <e p="DefaultDataTypeBehaviors.cs" t="Include" />
+            <e p="IAsyncRepository.cs" t="Include" />
+            <e p="IAuditRepoData.cs" t="Include" />
+            <e p="ICompositeKeyAuditRepoData.cs" t="Include" />
+            <e p="ICrudProvider.cs" t="Include" />
+            <e p="ICrudResponseProvider.cs" t="Include" />
+            <e p="IExtendedCrudProvider.cs" t="Include" />
+            <e p="IGeneratesDaoAssembly.cs" t="Include" />
+            <e p="IHashedObjectReader.cs" t="Include" />
+            <e p="IHasKeyHash.cs" t="Include" />
+            <e p="IHasTypeSchemaTempPathProvider.cs" t="Include" />
+            <e p="IHasUpdatedXrefCollectionProperties.cs" t="Include" />
+            <e p="IKeyedAuditRepoData.cs" t="Include" />
+            <e p="IMeta.cs" t="Include" />
+            <e p="IMetaProperty.cs" t="Include" />
+            <e p="IMetaPropertyVersionInfo.cs" t="Include" />
+            <e p="IMetaProperty{T}.cs" t="Include" />
+            <e p="IMetaProvider.cs" t="Include" />
+            <e p="IMeta{T}.cs" t="Include" />
+            <e p="InvalidIdPropertyTypeException.cs" t="Include" />
+            <e p="IObjectPersister.cs" t="Include" />
+            <e p="IObjectPersisterDirectoryProvider.cs" t="Include" />
+            <e p="IObjectQueryer.cs" t="Include" />
+            <e p="IObjectReader.cs" t="Include" />
+            <e p="IObjectWriter.cs" t="Include" />
+            <e p="IQueryFilterable.cs" t="Include" />
+            <e p="IReflectionCrudProvider.cs" t="Include" />
+            <e p="IRepoData.cs" t="Include" />
+            <e p="IRepoDataHydrator.cs" t="Include" />
+            <e p="IRepository.cs" t="Include" />
+            <e p="IRepositoryResolver.cs" t="Include" />
+            <e p="IRepositorySourceGenerator.cs" t="Include" />
+            <e p="ISourceGenerator.cs" t="Include" />
+            <e p="IStorableTypesProvider.cs" t="Include" />
+            <e p="ITypeFk.cs" t="Include" />
+            <e p="ITypeSchemaWarning.cs" t="Include" />
+            <e p="ITypeTableNameProvider.cs" t="Include" />
+            <e p="ITypeXref.cs" t="Include" />
+            <e p="IWrapperGenerator.cs" t="Include" />
+            <e p="KeyAttribute.cs" t="Include" />
+            <e p="Meta.cs" t="Include" />
+            <e p="MetaProperty.cs" t="Include" />
+            <e p="MetaPropertyVersionInfo.cs" t="Include" />
+            <e p="NoIdPropertyException.cs" t="Include" />
+            <e p="TypeSchemaWarningEventArgs.cs" t="Include" />
+            <e p="TypeSchemaWarnings.cs" t="Include" />
+          </e>
+          <e p="Schema" t="Include">
+            <e p="IColumn.cs" t="Include" />
+            <e p="IForeignKeyColumn.cs" t="Include" />
+            <e p="ISchemaDefinition.cs" t="Include" />
+            <e p="ISchemaManagerResult.cs" t="Include" />
+            <e p="ITable.cs" t="Include" />
+            <e p="ITypeSchema.cs" t="Include" />
+            <e p="IXrefInfo.cs" t="Include" />
+            <e p="IXrefTable.cs" t="Include" />
+          </e>
+          <e p="SetFormat.cs" t="Include" />
+          <e p="SortOrder.cs" t="Include" />
+          <e p="SqlExecuteDelegate.cs" t="Include" />
+          <e p="SqlStringBuilderDelegate.cs" t="Include" />
+          <e p="TableAttribute.cs" t="Include" />
+          <e p="WhereDelegate.cs" t="Include" />
+        </e>
+        <e p="DefaultConsoleMessageHandler.cs" t="Include" />
+        <e p="DictionaryExtensions.cs" t="Include" />
+        <e p="DirectoryInfoExtensions.cs" t="Include" />
+        <e p="Email.cs" t="Include" />
+        <e p="EnumerableExtensions.cs" t="Include" />
+        <e p="EventSubscription.cs" t="Include" />
+        <e p="ExceptionExtensions.cs" t="Include" />
+        <e p="ExceptionHandling" t="Include">
+          <e p="ReflectionTypeLoadAggregateException.cs" t="Include" />
+        </e>
+        <e p="ExcludeAttribute.cs" t="Include" />
+        <e p="Exec.cs" t="Include" />
+        <e p="Expect.cs" t="Include" />
+        <e p="ExpectationFailedException.cs" t="Include" />
+        <e p="Extensions.cs" t="Include" />
+        <e p="FileInfoExtensions.cs" t="Include" />
+        <e p="FileLock.cs" t="Include" />
+        <e p="FileSystemWatchingExtensions.cs" t="Include" />
+        <e p="GeneratedAssemblies.cs" t="Include" />
+        <e p="GeneratedAssemblyInfo.cs" t="Include" />
+        <e p="GenericExtensions.cs" t="Include" />
+        <e p="HashAlgorithms.cs" t="Include" />
+        <e p="HashExtensions.cs" t="Include" />
+        <e p="Headers.cs" t="Include" />
+        <e p="HttpResponse.cs" t="Include" />
+        <e p="HttpVerbs.cs" t="Include" />
+        <e p="IApplicationNameProvider.cs" t="Include" />
+        <e p="IAssemblyGenerator.cs" t="Include" />
+        <e p="ICompiler.cs" t="Include" />
+        <e p="IDescriptionProvider.cs" t="Include" />
+        <e p="IDiffReport.cs" t="Include" />
+        <e p="IEnumerableExtensions.cs" t="Include" />
+        <e p="IEventSubscription.cs" t="Include" />
+        <e p="IHasRequiredProperties.cs" t="Include" />
+        <e p="IHttpContext.cs" t="Include" />
+        <e p="IHttpResponse.cs" t="Include" />
+        <e p="IIpcMessage.cs" t="Include" />
+        <e p="IJsonable.cs" t="Include" />
+        <e p="Incubation" t="Include">
+          <e p="FluentCtorContext.cs" t="Include" />
+          <e p="Incubator.cs" t="Include" />
+          <e p="ISetupContext.cs" t="Include" />
+          <e p="ToDelimitedDelegate.cs" t="Include" />
+        </e>
+        <e p="InjectAttribute.cs" t="Include" />
+        <e p="Instant.cs" t="Include" />
+        <e p="IntExtensions.cs" t="Include" />
+        <e p="IObjectDecoder.cs" t="Include" />
+        <e p="IObjectEncoder.cs" t="Include" />
+        <e p="IObjectEncoding.cs" t="Include" />
+        <e p="IObjectEncoding{T}.cs" t="Include" />
+        <e p="IOrganizationNameProvider.cs" t="Include" />
+        <e p="Ipc.cs" t="Include" />
+        <e p="IRemoteHost.cs" t="Include" />
+        <e p="IRemoteSshHost.cs" t="Include" />
+        <e p="IRenderable.cs" t="Include" />
+        <e p="IRenderer.cs" t="Include" />
+        <e p="IRequest.cs" t="Include" />
+        <e p="IRequiresHttpContext.cs" t="Include" />
+        <e p="IResponse.cs" t="Include" />
+        <e p="ITemplateRenderer.cs" t="Include" />
+        <e p="ITemplateResourceRenderer.cs" t="Include" />
+        <e p="ITypeResolver.cs" t="Include" />
+        <e p="IUser.cs" t="Include" />
+        <e p="IUserManager.cs" t="Include" />
+        <e p="IValueConverter.cs" t="Include" />
+        <e p="IValueReveseTransformer.cs" t="Include" />
+        <e p="IValueTransformer.cs" t="Include" />
+        <e p="IWriteSource.cs" t="Include" />
+        <e p="JsonValueConverter.cs" t="Include" />
+        <e p="JulianDate.cs" t="Include" />
+        <e p="LocalAttribute.cs" t="Include" />
+        <e p="Loggable.cs" t="Include" />
+        <e p="LoggableEventArgs.cs" t="Include" />
+        <e p="Logging" t="Include">
+          <e p="HashingEventIdProvider.cs" t="Include" />
+          <e p="IEventIdProvider.cs" t="Include" />
+          <e p="ILog.cs" t="Include" />
+          <e p="ILogEventCommitter.cs" t="Include" />
+          <e p="ILoggable.cs" t="Include" />
+          <e p="ILogger.cs" t="Include" />
+          <e p="ILoggerProvider.cs" t="Include" />
+          <e p="ILogProvider.cs" t="Include" />
+          <e p="ILogReader.cs" t="Include" />
+          <e p="IMultiTargetLogger.cs" t="Include" />
+          <e p="Log.cs" t="Include" />
+          <e p="LogEntry.cs" t="Include" />
+          <e p="LogEntryAddedListener.cs" t="Include" />
+          <e p="LogEvent.cs" t="Include" />
+          <e p="LogEventType.cs" t="Include" />
+          <e p="Logger.cs" t="Include" />
+          <e p="LogMessage.cs" t="Include" />
+          <e p="LogReaderFactory.cs" t="Include" />
+          <e p="MessageEventArgs.cs" t="Include" />
+          <e p="Severity.cs" t="Include" />
+          <e p="VerbosityAttribute.cs" t="Include" />
+          <e p="VerbosityLevel.cs" t="Include" />
+        </e>
+        <e p="LongExtensions.cs" t="Include" />
+        <e p="Messaging" t="Include">
+          <e p="IEmailComposer.cs" t="Include" />
+          <e p="ISmtpSettingsProvider.cs" t="Include" />
+        </e>
+        <e p="MethodCase.cs" t="Include" />
+        <e p="NamedFormatter.cs" t="Include" />
+        <e p="NamedThread.cs" t="Include" />
+        <e p="NCuid" t="Include">
+          <e p="Base36Converter.cs" t="Include" />
+          <e p="Cuid.cs" t="Include" />
+          <e p="DateTimeExtensions.cs" t="Include" />
+          <e p="RandomSource.cs" t="Include" />
+          <e p="README.md" t="Include" />
+          <e p="StringExtensions.cs" t="Include" />
+        </e>
+        <e p="obj" t="ExcludeRecursive" />
+        <e p="ObjectExtensions.cs" t="Include" />
+        <e p="OSInfo.cs" t="Include" />
+        <e p="OSNames.cs" t="Include" />
+        <e p="ProcessApplicationNameProvider.cs" t="Include" />
+        <e p="ProcessExtensions.cs" t="Include" />
+        <e p="ProcessInfo.cs" t="Include" />
+        <e p="ProcessMode.cs" t="Include" />
+        <e p="ProcessOutput.cs" t="Include" />
+        <e p="ProcessOutputCollector.cs" t="Include" />
+        <e p="ProcessOutputEventArgs.cs" t="Include" />
+        <e p="ProcessStartInfoExtensions.cs" t="Include" />
+        <e p="ProxyAttribute.cs" t="Include" />
+        <e p="RandomHelper.cs" t="Include" />
+        <e p="RandomNumber.cs" t="Include" />
+        <e p="ReferenceAssemblyResolver.cs" t="Include" />
+        <e p="ReflectionExtensions.cs" t="Include" />
+        <e p="RoslynCompilationException.cs" t="Include" />
+        <e p="RoslynCompilationExceptionEventArgs.cs" t="Include" />
+        <e p="RoslynCompiler.cs" t="Include" />
+        <e p="RuntimeConfig.cs" t="Include" />
+        <e p="RuntimeSettings.cs" t="Include" />
+        <e p="Serialization" t="Include">
+          <e p="IDeserializer.cs" t="Include" />
+          <e p="ISerializer.cs" t="Include" />
+          <e p="JsonDeserializer.cs" t="Include" />
+          <e p="JsonSerializer.cs" t="Include" />
+          <e p="Serialization.cs" t="Include" />
+          <e p="SerializationFormat.cs" t="Include" />
+          <e p="Serialized.cs" t="Include" />
+          <e p="Serialized{T}.cs" t="Include" />
+          <e p="XmlDeserializer.cs" t="Include" />
+          <e p="XmlSerializer.cs" t="Include" />
+          <e p="YamlDeserializer.cs" t="Include" />
+          <e p="YamlSerializer.cs" t="Include" />
+        </e>
+        <e p="ServiceProxy" t="Include">
+          <e p="IContextCloneable.cs" t="Include" />
+          <e p="IServiceProxyResponse.cs" t="Include" />
+          <e p="IServiceProxyResponse{T}.cs" t="Include" />
+          <e p="ServiceProxyResponse.cs" t="Include" />
+        </e>
+        <e p="ServiceRegistry.cs" t="Include" />
+        <e p="StreamExtensions.cs" t="Include" />
+        <e p="StringExtensions.cs" t="Include" />
+        <e p="TypeExtensions.cs" t="Include" />
+        <e p="UlongExtensions.cs" t="Include" />
+        <e p="UserUtil.cs" t="Include" />
+        <e p="Workspace.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.base.services\bam.base.services" t="IncludeRecursive">
+        <e p="ApiHmacKeyRequiredAttribute.cs" t="Include" />
+        <e p="AppServiceAttribute.cs" t="Include" />
+        <e p="bam.base.services.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="Echo.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.base.services.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="ServiceSubdomainAttribute.cs" t="Include" />
+        <e p="SingletonAttribute.cs" t="Include" />
+        <e p="TestObject.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.caching\bam.caching" t="IncludeRecursive">
+        <e p="bam.caching.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="ByteArrayExtensions.cs" t="Include" />
+        <e p="Caching" t="Include">
+          <e p="Cache.cs" t="Include" />
+          <e p="CacheEvictionEventArgs.cs" t="Include" />
+          <e p="CacheItem.cs" t="Include" />
+          <e p="CacheItemComparer.cs" t="Include" />
+          <e p="CacheManager.cs" t="Include" />
+          <e p="CacheManagerEventArgs.cs" t="Include" />
+          <e p="CacheQueryEventArgs.cs" t="Include" />
+          <e p="CacheRetrieveEventArgs.cs" t="Include" />
+          <e p="CachingRepository.cs" t="Include" />
+          <e p="CachingRepositoryEventArgs.cs" t="Include" />
+          <e p="DeleteNotSupportedException.cs" t="Include" />
+          <e p="Extensions.cs" t="Include" />
+          <e p="File" t="Include">
+            <e p="BinaryFileCache.cs" t="Include" />
+            <e p="CachedFile.cs" t="Include" />
+            <e p="FileCache.cs" t="Include" />
+            <e p="IFileCache.cs" t="Include" />
+            <e p="JsFileCache.cs" t="Include" />
+            <e p="TextFileCache.cs" t="Include" />
+          </e>
+          <e p="ICacheManager.cs" t="Include" />
+          <e p="IMemorySize.cs" t="Include" />
+          <e p="QueryCache.cs" t="Include" />
+          <e p="QueryCacheEventArgs.cs" t="Include" />
+          <e p="QueryContext.cs" t="Include" />
+        </e>
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.caching.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="StringExtensions.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.commandline\bam.commandline" t="IncludeRecursive">
+        <e p="ArgumentInfo.cs" t="Include" />
+        <e p="ArgumentInfoHash.cs" t="Include" />
+        <e p="AssemblyInfo.cs" t="Include" />
+        <e p="bam.commandline.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="CommandLineArgumentConfigurer.cs" t="Include" />
+        <e p="CommandLineInterface.cs" t="Include" />
+        <e p="CommandLineTool.cs" t="Include" />
+        <e p="ConsoleActionAttribute.cs" t="Include" />
+        <e p="ConsoleArgsParsed.cs" t="Include" />
+        <e p="ConsoleMenu.cs" t="Include" />
+        <e p="ConsoleMenuDelegate.cs" t="Include" />
+        <e p="ConsoleMessages.cs" t="Include" />
+        <e p="ConsoleMethod.cs" t="Include" />
+        <e p="Data" t="Include">
+          <e p="Model" t="Include">
+            <e p="CommandLineMenuInterface.cs" t="Include" />
+          </e>
+        </e>
+        <e p="DeployableCommandLineTool.cs" t="Include" />
+        <e p="ExecutableDirectory.cs" t="Include" />
+        <e p="ExitDelegate.cs" t="Include" />
+        <e p="Extensions.cs" t="Include" />
+        <e p="IInfoAttribute.cs" t="Include" />
+        <e p="Menu" t="Include">
+          <e p="ConsoleInputParser.cs" t="Include" />
+          <e p="ConsoleMenuRenderer.cs" t="Include" />
+        </e>
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.commandline.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="ParsedArguments.cs" t="Include" />
+        <e p="PidFile.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.configuration\bam.configuration" t="IncludeRecursive">
+        <e p="_Configuration" t="Include">
+          <e p="ConfigurationResolver.cs" t="Include" />
+        </e>
+        <e p="bam.configuration.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="CompositeConfigurationProvider.cs" t="Include" />
+        <e p="Configurable.cs" t="Include" />
+        <e p="ConfigurationConflictEventArgs.cs" t="Include" />
+        <e p="ConfigurationEventArgs.cs" t="Include" />
+        <e p="ConfigurationResolver.cs" t="Include" />
+        <e p="CoreServices" t="Include">
+          <e p="ApplicationRegistration" t="Include">
+            <e p="IActiveApiSigningKeyIndex.cs" t="Include" />
+            <e p="IApiHmacKey.cs" t="Include" />
+            <e p="IApplication.cs" t="Include" />
+            <e p="IClient.cs" t="Include" />
+            <e p="IConfiguration.cs" t="Include" />
+            <e p="IConfigurationSetting.cs" t="Include" />
+            <e p="IHostAddress.cs" t="Include" />
+            <e p="IHostDomain.cs" t="Include" />
+            <e p="IMachine.cs" t="Include" />
+            <e p="INic.cs" t="Include" />
+            <e p="IOrganization.cs" t="Include" />
+            <e p="IProcessDescriptor.cs" t="Include" />
+            <e p="ISubscription.cs" t="Include" />
+            <e p="IUser.cs" t="Include" />
+          </e>
+          <e p="Auth" t="Include">
+            <e p="IAuthProviderInfo.cs" t="Include" />
+          </e>
+          <e p="IApplicationConfiguration.cs" t="Include" />
+          <e p="ICoreServiceResponse.cs" t="Include" />
+          <e p="ILoginResponse.cs" t="Include" />
+          <e p="ISignUpResponse.cs" t="Include" />
+          <e p="ISupportedAuthProviders.cs" t="Include" />
+        </e>
+        <e p="DefaultConfigurationApplicationNameProvider.cs" t="Include" />
+        <e p="DefaultConfigurationOrganizationNameProvider.cs" t="Include" />
+        <e p="DefaultConfigurationProvider.cs" t="Include" />
+        <e p="DefaultConfigurer.cs" t="Include" />
+        <e p="EnvironmentApplicationNameProvider.cs" t="Include" />
+        <e p="EnvironmentConfigurationProvider.cs" t="Include" />
+        <e p="FilePersistable.cs" t="Include" />
+        <e p="IApiHmacKeyInfo.cs" t="Include" />
+        <e p="IConfigurable.cs" t="Include" />
+        <e p="IConfigurer.cs" t="Include" />
+        <e p="ICoreClient.cs" t="Include" />
+        <e p="ICoreConfigurationProvider.cs" t="Include" />
+        <e p="IFilePersistable.cs" t="Include" />
+        <e p="InterfaceTypeMap.cs" t="Include" />
+        <e p="IServiceRegistryFileLoader.cs" t="Include" />
+        <e p="IUserRegistry.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.configuration.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="ServiceProxy" t="Include">
+          <e p="IApiArgumentEncoder.cs" t="Include" />
+          <e p="IServiceProxyClient.cs" t="Include" />
+          <e p="IServiceProxyInvocationRequest.cs" t="Include" />
+          <e p="IServiceProxyInvocationRequestArgumentWriter.cs" t="Include" />
+          <e p="IUserResolver.cs" t="Include" />
+          <e p="ServiceProxyInvocationRequestEventArgs.cs" t="Include" />
+          <e p="ServiceProxyInvocationRequestEventArgs{TService}.cs" t="Include" />
+          <e p="ServiceProxyVerbs.cs" t="Include" />
+        </e>
+        <e p="ServiceRegistryFile.cs" t="Include" />
+        <e p="SettingSource.cs" t="Include" />
+        <e p="SourcedConfigurationSetting.cs" t="Include" />
+        <e p="Validate.cs" t="Include" />
+        <e p="Web" t="Include">
+          <e p="IHttpClientResponse.cs" t="Include" />
+        </e>
+      </e>
+      <e p="submodules\bam.data\bam.data" t="IncludeRecursive">
+        <e p="_Data" t="Include">
+          <e p="_Repositories" t="Include">
+            <e p="NetCoreFileSystemObjectPersister.cs" t="Include" />
+            <e p="NetCoreObjectPersister.cs" t="Include" />
+            <e p="NetCoreObjectPersisterClient.cs" t="Include" />
+          </e>
+          <e p="_RepositoryTypes" t="Include">
+            <e p="AuditRepoData.cs" t="Include" />
+            <e p="CompositeKeyAuditRepoData.cs" t="Include" />
+            <e p="CompositeKeyHashProvider.cs" t="Include" />
+            <e p="KeyedAuditRepoData.cs" t="Include" />
+            <e p="KeyedRepoData.cs" t="Include" />
+            <e p="RepoData.cs" t="Include" />
+          </e>
+          <e p="_SQLite" t="Include">
+            <e p="SQLiteConnectionStringResolver.cs" t="Include" />
+          </e>
+          <e p="Dao.cs" t="Include" />
+          <e p="DaoProxyRegistration.cs" t="Include" />
+          <e p="DataExtensions.cs" t="Include" />
+          <e p="SchemaTemplateResources.cs" t="Include" />
+          <e p="SqlStringBuilder.cs" t="Include" />
+        </e>
+        <e p="_partial" t="Include">
+          <e p="DataProvider.cs" t="Include" />
+        </e>
+        <e p="AndFormat.cs" t="Include" />
+        <e p="Application" t="Include">
+          <e p="DaoRepoGenerationConfig.cs" t="Include" />
+        </e>
+        <e p="AppPaths.cs" t="Include" />
+        <e p="AssemblyInfo.cs" t="Include" />
+        <e p="bam.data.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="Book.cs" t="Include" />
+        <e p="CloseParen.cs" t="Include" />
+        <e p="CommitDelegate.cs" t="Include" />
+        <e p="Comparison.cs" t="Include" />
+        <e p="Config" t="Include">
+          <e p="DatabaseConfig.cs" t="Include" />
+          <e p="DatabaseCredentials.cs" t="Include" />
+        </e>
+        <e p="ConfiguredDatabaseFactory.cs" t="Include" />
+        <e p="ConnectionStringInfo.cs" t="Include" />
+        <e p="ConnectionStringResolveResult.cs" t="Include" />
+        <e p="ConnectionStringResolvers.cs" t="Include" />
+        <e p="ContainsComparison.cs" t="Include" />
+        <e p="CountResult.cs" t="Include" />
+        <e p="Dao.cs" t="Include" />
+        <e p="DaoCollection.cs" t="Include" />
+        <e p="DaoExpressionFilter.cs" t="Include" />
+        <e p="DaoId.cs" t="Include" />
+        <e p="DaoProxyRegistration.cs" t="Include" />
+        <e p="DaoTransaction.cs" t="Include" />
+        <e p="DaoValidationResult.cs" t="Include" />
+        <e p="Database.cs" t="Include" />
+        <e p="DatabaseContainer.cs" t="Include" />
+        <e p="DatabaseExecutionEventArgs.cs" t="Include" />
+        <e p="DatabaseInfo.cs" t="Include" />
+        <e p="DatabaseInitializationFailedException.cs" t="Include" />
+        <e p="DatabaseInitializers.cs" t="Include" />
+        <e p="DatabaseProvider.cs" t="Include" />
+        <e p="DataExtensions.cs" t="Include" />
+        <e p="DataPaths.cs" t="Include" />
+        <e p="DataTypeTranslator.cs" t="Include" />
+        <e p="Db.cs" t="Include" />
+        <e p="DbConnectionManager.cs" t="Include" />
+        <e p="DefaultConnectionStringResolver.cs" t="Include" />
+        <e p="DefaultDatabaseInitializer.cs" t="Include" />
+        <e p="DefaultDbConnectionManager.cs" t="Include" />
+        <e p="Delete.cs" t="Include" />
+        <e p="DeprecatedDbConnectionManager.cs" t="Include" />
+        <e p="DoesntContainComparison.cs" t="Include" />
+        <e p="DoesntEndWithComparison.cs" t="Include" />
+        <e p="DoesntStartWithComparison.cs" t="Include" />
+        <e p="DropNotEnabledException.cs" t="Include" />
+        <e p="EndsWithComparison.cs" t="Include" />
+        <e p="EnsureSchemaResult.cs" t="Include" />
+        <e p="ExpressionTypeNotSupportedException.cs" t="Include" />
+        <e p="Filter.cs" t="Include" />
+        <e p="FilterToken.cs" t="Include" />
+        <e p="FirebirdSql" t="Include">
+          <e p="FirebirdSqlConnectionStringResolver.cs" t="Include" />
+          <e p="FirebirdSqlCredentials.cs" t="Include" />
+          <e p="FirebirdSqlDatabase.cs" t="Include" />
+          <e p="FirebirdSqlFormatProvider.cs" t="Include" />
+          <e p="FirebirdSqlParameterBuilder.cs" t="Include" />
+          <e p="FirebirdSqlQuerySet.cs" t="Include" />
+          <e p="FirebirdSqlRegistrar.cs" t="Include" />
+          <e p="FirebirdSqlRegistrarCaller.cs" t="Include" />
+          <e p="FirebirdSqlStringBuilder.cs" t="Include" />
+        </e>
+        <e p="FormatPart.cs" t="Include" />
+        <e p="Hydrator.cs" t="Include" />
+        <e p="IDaoCollection.cs" t="Include" />
+        <e p="IHasCuid.cs" t="Include" />
+        <e p="IHasUuid.cs" t="Include" />
+        <e p="InComparison.cs" t="Include" />
+        <e p="InsertFormat.cs" t="Include" />
+        <e p="InsertResult.cs" t="Include" />
+        <e p="Js" t="Include">
+          <e p="AES.js" t="Include" />
+          <e p="SHA1.js" t="Include" />
+          <e p="SHA256.js" t="Include" />
+        </e>
+        <e p="LiteralFilterToken.cs" t="Include" />
+        <e p="Model" t="Include">
+          <e p="ConsoleMenuContext.cs" t="Include" />
+          <e p="ConsoleModelActionMenuWriter.cs" t="Include" />
+          <e p="IModelActionMenuWriter.cs" t="Include" />
+          <e p="MenuContext.cs" t="Include" />
+          <e p="ModelAction.cs" t="Include" />
+          <e p="ModelActionAttribute.cs" t="Include" />
+          <e p="ModelActionMenu.cs" t="Include" />
+          <e p="ModelSetting.cs" t="Include" />
+        </e>
+        <e p="MsSql" t="Include">
+          <e p="Extensions.cs" t="Include" />
+          <e p="MsSqlConnectionStringResolver.cs" t="Include" />
+          <e p="MsSqlCredentials.cs" t="Include" />
+          <e p="MsSqlDatabase.cs" t="Include" />
+          <e p="MsSqlDatabaseInitializer.cs" t="Include" />
+          <e p="MsSqlDataTypeTranslator.cs" t="Include" />
+          <e p="MsSqlParameterBuilder.cs" t="Include" />
+          <e p="MsSqlQuerySet.cs" t="Include" />
+          <e p="MsSqlRegistrar.cs" t="Include" />
+          <e p="MsSqlRegistrarCaller.cs" t="Include" />
+          <e p="MsSqlSqlStringBuilder.cs" t="Include" />
+        </e>
+        <e p="MultipleEntriesFoundException.cs" t="Include" />
+        <e p="MySql" t="Include">
+          <e p="MySqlConnectionStringResolver.cs" t="Include" />
+          <e p="MySqlCredentials.cs" t="Include" />
+          <e p="MySqlDatabase.cs" t="Include" />
+          <e p="MySqlDatabaseInitializer.cs" t="Include" />
+          <e p="MySqlDataTypeTranslator.cs" t="Include" />
+          <e p="MySqlFormatProvider.cs" t="Include" />
+          <e p="MySqlParameterBuilder.cs" t="Include" />
+          <e p="MySqlQuerySet.cs" t="Include" />
+          <e p="MySqlRegistrar.cs" t="Include" />
+          <e p="MySqlRegistrarCaller.cs" t="Include" />
+          <e p="MySqlSqlStringBuilder.cs" t="Include" />
+        </e>
+        <e p="Npgsql" t="Include">
+          <e p="NpgsqlConnectionStringResolver.cs" t="Include" />
+          <e p="NpgsqlCredentials.cs" t="Include" />
+          <e p="NpgsqlDatabase.cs" t="Include" />
+          <e p="NpgsqlDatabaseInitializer.cs" t="Include" />
+          <e p="NpgsqlForeignKeyDescriptor.cs" t="Include" />
+          <e p="NpgsqlFormatProvider.cs" t="Include" />
+          <e p="NpgsqlParameterBuilder.cs" t="Include" />
+          <e p="NpgsqlQuerySet.cs" t="Include" />
+          <e p="NpgsqlRegistrar.cs" t="Include" />
+          <e p="NpgsqlRegistrarCaller.cs" t="Include" />
+          <e p="NpgsqlSqlStringBuilder.cs" t="Include" />
+        </e>
+        <e p="NullComparison.cs" t="Include" />
+        <e p="NullConnectionStringResolver.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.data.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="OpenParen.cs" t="Include" />
+        <e p="Oracle" t="Include">
+          <e p="IPLSqlStringBuilder.cs" t="Include" />
+          <e p="OracleConnectionStringResolver.cs" t="Include" />
+          <e p="OracleCredentials.cs" t="Include" />
+          <e p="OracleDatabase.cs" t="Include" />
+          <e p="OracleDatabaseInitializer.cs" t="Include" />
+          <e p="OracleDatasetProvider.cs" t="Include" />
+          <e p="OracleFormatProvider.cs" t="Include" />
+          <e p="OracleParameterBuilder.cs" t="Include" />
+          <e p="OracleQuerySet.cs" t="Include" />
+          <e p="OracleRegistrar.cs" t="Include" />
+          <e p="OracleRegistrarCaller.cs" t="Include" />
+          <e p="OracleSchemaInitializer.cs" t="Include" />
+          <e p="OracleSqlStringBuilder.cs" t="Include" />
+        </e>
+        <e p="OrderBy.cs" t="Include" />
+        <e p="PagedEnumerator.cs" t="Include" />
+        <e p="PagedQuery.cs" t="Include" />
+        <e p="ParameterBuilder.cs" t="Include" />
+        <e p="ParameterInfo.cs" t="Include" />
+        <e p="PerThreadDbConnectionManager.cs" t="Include" />
+        <e p="Postgres" t="Include">
+          <e p="PostgresConnectionStringResolver.cs" t="Include" />
+          <e p="PostgresCredentials.cs" t="Include" />
+          <e p="PostgresDatabase.cs" t="Include" />
+          <e p="PostgresDatabaseInitializer.cs" t="Include" />
+          <e p="PostgresForeignKeyDescriptor.cs" t="Include" />
+          <e p="PostgresFormatProvider.cs" t="Include" />
+          <e p="PostgresParameterBuilder.cs" t="Include" />
+          <e p="PostgresQuerySet.cs" t="Include" />
+          <e p="PostgresRegistrar.cs" t="Include" />
+          <e p="PostgresRegistrarCaller.cs" t="Include" />
+          <e p="PostgresSqlStringBuilder.cs" t="Include" />
+        </e>
+        <e p="Qi" t="Include">
+          <e p="Dao.js" t="Include" />
+          <e p="Qi.cs" t="Include" />
+          <e p="Qi.js" t="Include" />
+          <e p="QiClause.cs" t="Include" />
+          <e p="QiOperator.cs" t="Include" />
+          <e p="QiQuery.cs" t="Include" />
+        </e>
+        <e p="Query.cs" t="Include" />
+        <e p="QueryFilter.cs" t="Include" />
+        <e p="QueryFilter{C}.cs" t="Include" />
+        <e p="QueryResult.cs" t="Include" />
+        <e p="QuerySet.cs" t="Include" />
+        <e p="QuerySetResults.cs" t="Include" />
+        <e p="QueryValue.cs" t="Include" />
+        <e p="Query{C,T}.cs" t="Include" />
+        <e p="RawFormat.cs" t="Include" />
+        <e p="README.md" t="Include" />
+        <e p="Registrar.cs" t="Include" />
+        <e p="RegistrarCallerFactory.cs" t="Include" />
+        <e p="RelationalDatabaseTypes.cs" t="Include" />
+        <e p="Repositories" t="Include">
+          <e p="DataProvider.cs" t="Include" />
+        </e>
+        <e p="RepositoryTemplateResources.cs" t="Include" />
+        <e p="SchemaInitializer.cs" t="Include" />
+        <e p="SchemasAttribute.cs" t="Include" />
+        <e p="SchemaWriter.cs" t="Include" />
+        <e p="Select.cs" t="Include" />
+        <e p="SelectColumn.cs" t="Include" />
+        <e p="SelectResult.cs" t="Include" />
+        <e p="SerializableQuery.cs" t="Include" />
+        <e p="Services" t="Include">
+          <e p="DataReplication" t="Include">
+            <e p="UniversalIdentifiers.cs" t="Include" />
+          </e>
+        </e>
+        <e p="SqlDialect.cs" t="Include" />
+        <e p="SqlInfo.cs" t="Include" />
+        <e p="SQLite" t="Include">
+          <e p="SQLiteConnectionStringResolver.cs" t="Include" />
+          <e p="SQLiteDatabase.cs" t="Include" />
+          <e p="SQLiteDatabaseInitializer.cs" t="Include" />
+          <e p="SQLiteDatabaseProvider.cs" t="Include" />
+          <e p="SQLiteParameterBuilder.cs" t="Include" />
+          <e p="SQLiteQuerySet.cs" t="Include" />
+          <e p="SQLiteRegistrar.cs" t="Include" />
+          <e p="SQLiteRegistrarCaller.cs" t="Include" />
+          <e p="SQLiteSchemaInitializer.cs" t="Include" />
+          <e p="SQLiteSqlStringBuilder.cs" t="Include" />
+        </e>
+        <e p="SqlStringBuilder.cs" t="Include" />
+        <e p="StartsWithComparison.cs" t="Include" />
+        <e p="StaticDatabaseInitializer.cs" t="Include" />
+        <e p="SystemPaths.cs" t="Include" />
+        <e p="UniversalDeterministicIdResolver.cs" t="Include" />
+        <e p="UniversalIdResolver.cs" t="Include" />
+        <e p="ValidationException.cs" t="Include" />
+        <e p="WhereFormat.cs" t="Include" />
+        <e p="XrefDaoCollection.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.data.backup\bam.data.backup" t="IncludeRecursive">
+        <e p="_" t="Include">
+          <e p="BackedupDatabase.cs" t="Include" />
+          <e p="DaoBackup.cs" t="Include" />
+          <e p="DaoToDtoGenerator.cs" t="Include" />
+        </e>
+        <e p="BackedupDatabase.cs" t="Include" />
+        <e p="bam.data.backup.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="DaoBackup.cs" t="Include" />
+        <e p="DaoToDtoGenerator.cs" t="Include" />
+        <e p="Dto.cs" t="Include" />
+        <e p="DtoModel.cs" t="Include" />
+        <e p="DtoPropertyModel.cs" t="Include" />
+        <e p="MetadataReferenceResolver.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.data.backup.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="OldToNewIdMapping.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.data.repositories\bam.data.repositories" t="IncludeRecursive">
+        <e p="_" t="Include">
+          <e p="SchemaRepositoryGenerator.cs" t="Include" />
+        </e>
+        <e p="bam.data.repositories.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="DatabaseFactory.cs" t="Include" />
+        <e p="IpcMessage.cs" t="Include" />
+        <e p="IpcMessageLockInfo.cs" t="Include" />
+        <e p="ISchemaRepositoryGeneratorSettingsProvider.cs" t="Include" />
+        <e p="IWrapperModelRenderProvider.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.data.repositories.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Protobuf" t="Include">
+          <e p="DaoProtoFileGenerator.cs" t="Include" />
+          <e p="InMemoryPropertyNumberer.cs" t="Include" />
+          <e p="IPropertyNumberer.cs" t="Include" />
+          <e p="ProtocolBufferProperty.cs" t="Include" />
+          <e p="ProtocolBuffersExtensions.cs" t="Include" />
+          <e p="ProtocolBufferType.cs" t="Include" />
+          <e p="ProtocolBufferTypeModel.cs" t="Include" />
+          <e p="ProtoFileGenerator.cs" t="Include" />
+        </e>
+        <e p="Repositories" t="Include">
+          <e p="AsyncDaoRepository.cs" t="Include" />
+          <e p="AsyncRepository.cs" t="Include" />
+          <e p="CompositeKeyMap.cs" t="Include" />
+          <e p="DaoCrudResponseProvider.cs" t="Include" />
+          <e p="DaoGenerationException.cs" t="Include" />
+          <e p="DaoInheritanceRepository.cs" t="Include" />
+          <e p="DaoRepository.cs" t="Include" />
+          <e p="DaoRepositorySchemaWarningEventArgs.cs" t="Include" />
+          <e p="DaoSuffixTypeTableNameProvider.cs" t="Include" />
+          <e p="DatabaseExtensions.cs" t="Include" />
+          <e p="DatabaseFactory.cs" t="Include" />
+          <e p="DefaultRepoDataHydrator.cs" t="Include" />
+          <e p="DefaultRepositoryResolver.cs" t="Include" />
+          <e p="FsRepoData.cs" t="Include" />
+          <e p="GenerateDaoAssemblyEventArgs.cs" t="Include" />
+          <e p="GeneratedDaoAssemblyInfo.cs" t="Include" />
+          <e p="InstanceNotFoundException.cs" t="Include" />
+          <e p="MetaId.cs" t="Include" />
+          <e p="MetaProperty.cs" t="Include" />
+          <e p="MetaPropertyVersionInfo.cs" t="Include" />
+          <e p="MetaProvider.cs" t="Include" />
+          <e p="MissingForeignKeyPropertyException.cs" t="Include" />
+          <e p="MongoRepository.cs" t="Include" />
+          <e p="NamedAuditRepoData.cs" t="Include" />
+          <e p="NamespaceStorableTypesProvider.cs" t="Include" />
+          <e p="ObjectPersister.cs" t="Include" />
+          <e p="ObjectPersisterDirectoryProvider.cs" t="Include" />
+          <e p="ObjectReader.cs" t="Include" />
+          <e p="ProcessModeResolver.cs" t="Include" />
+          <e p="RazorWrapperGenerator.cs" t="Include" />
+          <e p="RepoDataHydrator.cs" t="Include" />
+          <e p="Repository.cs" t="Include" />
+          <e p="RepositoryEventArgs.cs" t="Include" />
+          <e p="RepositoryResolver.cs" t="Include" />
+          <e p="RepositoryStorableTypesProvider.cs" t="Include" />
+          <e p="SchemaDifferenceEventArgs.cs" t="Include" />
+          <e p="SchemaTypeModel.cs" t="Include" />
+          <e p="Templates" t="Include">
+            <e p="ChildPrimaryKeyProperty.tmpl" t="Include" />
+            <e p="Dto.tmpl" t="Include" />
+            <e p="ForeignKeyProperty.tmpl" t="Include" />
+            <e p="SchemaRepository.tmpl" t="Include" />
+            <e p="SchemaRepositoryAddType.tmpl" t="Include" />
+            <e p="SchemaRepositoryMethods.tmpl" t="Include" />
+            <e p="Wrapper.tmpl" t="Include" />
+            <e p="XrefLeftProperty.tmpl" t="Include" />
+            <e p="XrefRightProperty.tmpl" t="Include" />
+          </e>
+          <e p="TypeDaoGenerator.cs" t="Include" />
+          <e p="TypeInheritanceSqlWriter.cs" t="Include" />
+          <e p="TypeXrefModel.cs" t="Include" />
+          <e p="UnsupportedRepositoryTypeException.cs" t="Include" />
+          <e p="WrapperExtensions.cs" t="Include" />
+          <e p="WrapperGenerator.cs" t="Include" />
+          <e p="WrapperModel.cs" t="Include" />
+          <e p="Xref.cs" t="Include" />
+          <e p="XrefInfo.cs" t="Include" />
+        </e>
+        <e p="SchemaRepositoryGenerator.cs" t="Include" />
+        <e p="SchemaRepositoryGeneratorSettings.cs" t="Include" />
+        <e p="SchemaRepositoryModel.cs" t="Include" />
+        <e p="WrapperModel.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.data.schema\bam.data.schema" t="IncludeRecursive">
+        <e p="_Repositories" t="Include">
+          <e p="TypeInheritanceSchemaGenerator.cs" t="Include" />
+        </e>
+        <e p="_Schema" t="Include">
+          <e p="SchemaManager.cs" t="Include" />
+        </e>
+        <e p="bam.data.schema.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="DaoSchema.cs" t="Include" />
+        <e p="EchoTypeTableNameProvider.cs" t="Include" />
+        <e p="FirebirdSql" t="Include">
+          <e p="FirebirdSqlSchemaExtractor.cs" t="Include" />
+        </e>
+        <e p="MsSql" t="Include">
+          <e p="MsSqlSchemaExtractor.cs" t="Include" />
+        </e>
+        <e p="MySql" t="Include">
+          <e p="MySqlSchemaExtractor.cs" t="Include" />
+        </e>
+        <e p="Npgsql" t="Include">
+          <e p="NpgsqlSchemaExtractor.cs" t="Include" />
+        </e>
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.data.schema.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Postgres" t="Include">
+          <e p="PotsgresSchemaExtractor.cs" t="Include" />
+        </e>
+        <e p="PropertyColumn.cs" t="Include" />
+        <e p="Schema" t="Include">
+          <e p="AddAuditColumnsAugmentation.cs" t="Include" />
+          <e p="AddColumnAugmentation.cs" t="Include" />
+          <e p="AddCreatedAugmentation.cs" t="Include" />
+          <e p="AddIdKeyColumnAugmentation.cs" t="Include" />
+          <e p="AddModifiedAugmentation.cs" t="Include" />
+          <e p="AutoIdSchemaManager.cs" t="Include" />
+          <e p="Column.cs" t="Include" />
+          <e p="ColumnNameToPropertyName.cs" t="Include" />
+          <e p="CuidSchemaManager.cs" t="Include" />
+          <e p="DaoContextModel.cs" t="Include" />
+          <e p="DaoGenerationEventArgs.cs" t="Include" />
+          <e p="DaoGenerator.cs" t="Include" />
+          <e p="DaoTableSchemaModel.cs" t="Include" />
+          <e p="DaoTargetStreamResolver.cs" t="Include" />
+          <e p="EchoNameFormatter.cs" t="Include" />
+          <e p="ForeignKeyColumn.cs" t="Include" />
+          <e p="ForeignKeyColumnModel.cs" t="Include" />
+          <e p="GeneratorEventDelegate.cs" t="Include" />
+          <e p="IDaoCodeWriter.cs" t="Include" />
+          <e p="IDaoTargetStreamResolver.cs" t="Include" />
+          <e p="IHasSchemaTempPathProvider.cs" t="Include" />
+          <e p="INameFormatter.cs" t="Include" />
+          <e p="ISchemaExtractor.cs" t="Include" />
+          <e p="KeyColumn.cs" t="Include" />
+          <e p="MappedSchemaDefinition.cs" t="Include" />
+          <e p="NamespaceNotSpecifiedException.cs" t="Include" />
+          <e p="NonForeignKeyColumnModel.cs" t="Include" />
+          <e p="ReferencingForeignKeyModel.cs" t="Include" />
+          <e p="ResultStreamEventDelegate.cs" t="Include" />
+          <e p="ReverseDaoSchemaExtractor.cs" t="Include" />
+          <e p="SchemaDefinition.cs" t="Include" />
+          <e p="SchemaExtractor.cs" t="Include" />
+          <e p="SchemaExtractorEventArgs.cs" t="Include" />
+          <e p="SchemaExtractorNamingCollisionStrategy.cs" t="Include" />
+          <e p="SchemaManager.cs" t="Include" />
+          <e p="SchemaManagerAugmentation.cs" t="Include" />
+          <e p="SchemaManagerResult.cs" t="Include" />
+          <e p="SchemaNameMap.cs" t="Include" />
+          <e p="SchemaNameMapNameFormatter.cs" t="Include" />
+          <e p="Table.cs" t="Include" />
+          <e p="TableNameToClassName.cs" t="Include" />
+          <e p="TargetTableEventDelegate.cs" t="Include" />
+          <e p="Templates" t="Include">
+            <e p="ChildDaoCollectionAdd.tmpl" t="Include" />
+            <e p="ChildXrefCollectionAdd.tmpl" t="Include" />
+            <e p="Class.tmpl" t="Include" />
+            <e p="Collection.tmpl" t="Include" />
+            <e p="ColumnsClass.tmpl" t="Include" />
+            <e p="ColumnsProperty.tmpl" t="Include" />
+            <e p="Context.tmpl" t="Include" />
+            <e p="ContextMethods.tmpl" t="Include" />
+            <e p="DaoCollectionProperty.tmpl" t="Include" />
+            <e p="ForeignKeyProperty.tmpl" t="Include" />
+            <e p="KeyProperty.tmpl" t="Include" />
+            <e p="PagedQueryClass.tmpl" t="Include" />
+            <e p="Partial.tmpl" t="Include" />
+            <e p="Property.tmpl" t="Include" />
+            <e p="QiClass.tmpl" t="Include" />
+            <e p="QueryClass.tmpl" t="Include" />
+            <e p="README.md" t="Include" />
+            <e p="XrefProperty.tmpl" t="Include" />
+          </e>
+          <e p="UuidSchemaManager.cs" t="Include" />
+          <e p="XrefInfo.cs" t="Include" />
+          <e p="XrefInfoModel.cs" t="Include" />
+          <e p="XrefTable.cs" t="Include" />
+        </e>
+        <e p="SchemaDefinitionCreateResult.cs" t="Include" />
+        <e p="SchemaWarnings.cs" t="Include" />
+        <e p="SQLite" t="Include">
+          <e p="SQLiteSchemaExtractor.cs" t="Include" />
+        </e>
+        <e p="TypeExtensions.cs" t="Include" />
+        <e p="TypeFk.cs" t="Include" />
+        <e p="TypeInheritanceDescriptor.cs" t="Include" />
+        <e p="TypeSchema.cs" t="Include" />
+        <e p="TypeSchemaException.cs" t="Include" />
+        <e p="TypeSchemaGenerator.cs" t="Include" />
+        <e p="TypeSchemaPropertyInfo.cs" t="Include" />
+        <e p="TypeSchemaPropertyManager.cs" t="Include" />
+        <e p="TypeSchemaScriptWriter.cs" t="Include" />
+        <e p="TypeSchemaWarning.cs" t="Include" />
+        <e p="TypeTable.cs" t="Include" />
+        <e p="TypeXref.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.encryption\bam.encryption" t="IncludeRecursive">
+        <e p="bam.encryption.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="EncryptAttribute.cs" t="Include" />
+        <e p="EncryptedHttpResponse.cs" t="Include" />
+        <e p="Encryption" t="Include">
+          <e p="Aes.cs" t="Include" />
+          <e p="AesBase64ReverseTransformer.cs" t="Include" />
+          <e p="AesBase64Transformer.cs" t="Include" />
+          <e p="AesByteReverseTransformer.cs" t="Include" />
+          <e p="AesByteTransformer.cs" t="Include" />
+          <e p="AesDecryptor.cs" t="Include" />
+          <e p="AesEncryptor.cs" t="Include" />
+          <e p="AesKeyExchange.cs" t="Include" />
+          <e p="AesKeyVectorPair.cs" t="Include" />
+          <e p="AsymmetricContentCipher.cs" t="Include" />
+          <e p="AsymmetricContentCipher{T}.cs" t="Include" />
+          <e p="AsymmetricContentEncryptor.cs" t="Include" />
+          <e p="AsymmetricDataDecryptor.cs" t="Include" />
+          <e p="AsymmetricDataEncryptor.cs" t="Include" />
+          <e p="AsymmetricEncryptedHttpResponse.cs" t="Include" />
+          <e p="Cipher.cs" t="Include" />
+          <e p="CipherHeaders.cs" t="Include" />
+          <e p="ClientKeySetDataManager.cs" t="Include" />
+          <e p="ContentCipher.cs" t="Include" />
+          <e p="ContentCipher{T}.cs" t="Include" />
+          <e p="Data" t="Include">
+            <e p="ClientKeySet.cs" t="Include" />
+            <e p="DaoRepoGenerationConfig.yaml" t="Include" />
+            <e p="Files" t="Include">
+              <e p="KeySetFile.cs" t="Include" />
+            </e>
+            <e p="KeySet.cs" t="Include" />
+            <e p="ServerKeySet.cs" t="Include" />
+          </e>
+          <e p="Decrypted.cs" t="Include" />
+          <e p="DecryptedDictionary.cs" t="Include" />
+          <e p="DefaultConfigurationSaltProvider.cs" t="Include" />
+          <e p="Encrypted.cs" t="Include" />
+          <e p="EncryptedDictionary.cs" t="Include" />
+          <e p="EncryptedHttpRequest.cs" t="Include" />
+          <e p="EncryptedHttpRequest{T}.cs" t="Include" />
+          <e p="Encryption.db.js" t="Include" />
+          <e p="EncryptionDataRepository.cs" t="Include" />
+          <e p="Extensions.cs" t="Include" />
+          <e p="HttpHeaders.cs" t="Include" />
+          <e p="HttpRequest.cs" t="Include" />
+          <e p="HttpRequestDecryptor.cs" t="Include" />
+          <e p="HttpRequestDecryptor{T}.cs" t="Include" />
+          <e p="HttpRequestEncryptor.cs" t="Include" />
+          <e p="HttpRequestEncryptor{T}.cs" t="Include" />
+          <e p="HttpRequestHeaderDecryptor.cs" t="Include" />
+          <e p="HttpRequestHeaderEncryptor.cs" t="Include" />
+          <e p="HttpRequest{T}.cs" t="Include" />
+          <e p="IAesKeyExchange.cs" t="Include" />
+          <e p="IAesKeySource.cs" t="Include" />
+          <e p="IApplicationKeySet.cs" t="Include" />
+          <e p="IClientKeySet.cs" t="Include" />
+          <e p="IClientKeySetDataManager.cs" t="Include" />
+          <e p="IClientKeySource.cs" t="Include" />
+          <e p="ICommunicationKeySet.cs" t="Include" />
+          <e p="IContentCipher.cs" t="Include" />
+          <e p="IContentDecryptor{T}.cs" t="Include" />
+          <e p="IContentEncryptor{T}.cs" t="Include" />
+          <e p="IDecryptedDictionary.cs" t="Include" />
+          <e p="IDecryptor.cs" t="Include" />
+          <e p="IEncryptedDictionary.cs" t="Include" />
+          <e p="IEncryptedHttpRequest.cs" t="Include" />
+          <e p="IEncryptedHttpRequest{TContent}.cs" t="Include" />
+          <e p="IEncryptor.cs" t="Include" />
+          <e p="IHttpRequest.cs" t="Include" />
+          <e p="IHttpRequestDecryptor.cs" t="Include" />
+          <e p="IHttpRequestDecryptor{T}.cs" t="Include" />
+          <e p="IHttpRequestEncryptor.cs" t="Include" />
+          <e p="IHttpRequestEncryptor{T}.cs" t="Include" />
+          <e p="IHttpRequestHeaderDecryptor.cs" t="Include" />
+          <e p="IHttpRequestHeaderEncryptor.cs" t="Include" />
+          <e p="IHttpRequest{T}.cs" t="Include" />
+          <e p="IKeySet.cs" t="Include" />
+          <e p="IRsaKeySource.cs" t="Include" />
+          <e p="IRsaPublicKeySource.cs" t="Include" />
+          <e p="ISaltProvider.cs" t="Include" />
+          <e p="ISecretExchange.cs" t="Include" />
+          <e p="IServerKeySet.cs" t="Include" />
+          <e p="IServerKeySetDataManager.cs" t="Include" />
+          <e p="IServerKeySource.cs" t="Include" />
+          <e p="NOTES.txt" t="Include" />
+          <e p="PasswordDecrypted.cs" t="Include" />
+          <e p="PasswordEncrypted.cs" t="Include" />
+          <e p="Pem.cs" t="Include" />
+          <e p="regen_db_js.sh" t="Include" />
+          <e p="Rijndael.cs" t="Include" />
+          <e p="Rsa.cs" t="Include" />
+          <e p="RsaBase64ReverseTransformer.cs" t="Include" />
+          <e p="RsaBase64Transformer.cs" t="Include" />
+          <e p="RsaByteReverseTransformer.cs" t="Include" />
+          <e p="RsaByteTransformer.cs" t="Include" />
+          <e p="RsaDecryptor.cs" t="Include" />
+          <e p="RsaEncryptor.cs" t="Include" />
+          <e p="RsaKeyFile.cs" t="Include" />
+          <e p="RsaKeyLength.cs" t="Include" />
+          <e p="RSAKeyValue.cs" t="Include" />
+          <e p="RsaPublicKey.cs" t="Include" />
+          <e p="RsaPublicPrivateKeyPair.cs" t="Include" />
+          <e p="SecretExchange.cs" t="Include" />
+          <e p="Secure.cs" t="Include" />
+          <e p="ServerKeySetDataManager.cs" t="Include" />
+          <e p="SocialKeyInfrastructure" t="Include">
+            <e p="NOTES.md" t="Include" />
+          </e>
+          <e p="SymmetricContentCipher.cs" t="Include" />
+          <e p="SymmetricContentCipher{T}.cs" t="Include" />
+          <e p="SymmetricContentDecryptor{T}.cs" t="Include" />
+          <e p="SymmetricContentEncryptor.cs" t="Include" />
+          <e p="SymmetricDataDecryptor.cs" t="Include" />
+          <e p="SymmetricDataEncryptor.cs" t="Include" />
+          <e p="SymmetricEncryptedHttpResponse.cs" t="Include" />
+        </e>
+        <e p="EncryptionSchemes.cs" t="Include" />
+        <e p="MediaTypes.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.encryption.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="PipelineFactoryConstructorAttribute.cs" t="Include" />
+        <e p="PipelineFactoryTransformerNameAttribute.cs" t="Include" />
+        <e p="ValueReverseTransformerPipeline.cs" t="Include" />
+        <e p="ValueTransformer.cs" t="Include" />
+        <e p="ValueTransformerPipeline.cs" t="Include" />
+        <e p="ValueTransformerPipelineFactory.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.generators\bam.generators" t="IncludeRecursive">
+        <e p="AssemblyGenerator.cs" t="Include" />
+        <e p="bam.generators.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="DaoProtocolBuffersAssemblyGenerator.cs" t="Include" />
+        <e p="Handlebars" t="Include">
+          <e p="HandlebarsDirectory.cs" t="Include" />
+          <e p="HandlebarsEmbeddedResources.cs" t="Include" />
+          <e p="HandlebarsTemplateSet.cs" t="Include" />
+        </e>
+        <e p="Handlebars.cs" t="Include" />
+        <e p="HandlebarsTemplateRenderer.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.generators.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="ProtocolBuffersAssemblyGenerator.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.javascript\bam.javascript" t="IncludeRecursive">
+        <e p="_Javascript" t="Include">
+          <e p="JavascriptSqlProvider.cs" t="Include" />
+        </e>
+        <e p="bam.javascript.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="Data" t="Include">
+          <e p="MsSql" t="Include">
+            <e p="MsSqlJavaScriptSqlProvider.cs" t="Include" />
+          </e>
+          <e p="Npgsql" t="Include">
+            <e p="NpgsqlJavaScriptSqlProvider.cs" t="Include" />
+          </e>
+          <e p="Postgres" t="Include">
+            <e p="PostgresJavaScriptSqlProvider.cs" t="Include" />
+          </e>
+        </e>
+        <e p="Javascript" t="Include">
+          <e p="CliProvider.cs" t="Include" />
+          <e p="EncryptionAlgorithm.cs" t="Include" />
+          <e p="Extensions.cs" t="Include" />
+          <e p="JsContext.cs" t="Include" />
+          <e p="json2.js" t="Include" />
+          <e p="NodeJs" t="Include">
+            <e p="NodeScriptRunner.cs" t="Include" />
+          </e>
+          <e p="ResourceScripts.cs" t="Include" />
+          <e p="Sql" t="Include">
+            <e p="JavascriptSqlProvider.cs" t="Include" />
+            <e p="OracleJavascriptSqlProvider.cs" t="Include" />
+            <e p="SQLiteJavascriptSqlProvider.cs" t="Include" />
+            <e p="SqlResponse.cs" t="Include" />
+          </e>
+        </e>
+        <e p="MinifyResult.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.javascript.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+      </e>
+      <e p="submodules\bam.logging\bam.logging" t="IncludeRecursive">
+        <e p="bam.logging.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="ErrorMessage.cs" t="Include" />
+        <e p="LogEventCollection.cs" t="Include" />
+        <e p="LogProvider.cs" t="Include" />
+        <e p="LogSchemaType.cs" t="Include" />
+        <e p="MultiTargetLogger.cs" t="Include" />
+        <e p="NamespaceDoc.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.logging.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="TextFileLogger.cs" t="Include" />
+        <e p="WarningMessage.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.logging.counters\bam.logging.counters" t="IncludeRecursive">
+        <e p="bam.logging.counters.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="Counter.cs" t="Include" />
+        <e p="Data" t="Include">
+          <e p="CounterData.cs" t="Include" />
+          <e p="TimerData.cs" t="Include" />
+        </e>
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.logging.counters.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Stats.cs" t="Include" />
+        <e p="Timer.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.storage\bam.storage" t="IncludeRecursive">
+        <e p="bam.storage.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="IAsyncStorage.cs" t="Include" />
+        <e p="IStorage.cs" t="Include" />
+        <e p="IStorageResult.cs" t="Include" />
+        <e p="IStorageSearchFilter.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.storage.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+      </e>
+      <e p="submodules\bam.sys\bam.sys" t="IncludeRecursive">
+        <e p="bam.sys.csproj" t="IncludeRecursive" />
+      </e>
+      <e p="submodules\bam.sys.console\bam.sys.console" t="IncludeRecursive">
+        <e p="bam.sys.console.csproj" t="IncludeRecursive" />
+        <e p="BamContext.cs" t="Include" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="ConsoleActionMenuItemProvider.cs" t="Include" />
+        <e p="ConsoleCommandAttribute.cs" t="Include" />
+        <e p="ConsoleMenuFooterRenderer.cs" t="Include" />
+        <e p="ConsoleMenuHeaderRenderer.cs" t="Include" />
+        <e p="ConsoleMenuInput.cs" t="Include" />
+        <e p="ConsoleMenuInputCommandInterpreter.cs" t="Include" />
+        <e p="ConsoleMenuInputReader.cs" t="Include" />
+        <e p="ConsoleMenuItemRunner.cs" t="Include" />
+        <e p="ConsoleMenuItemRunResultRenderer.cs" t="Include" />
+        <e p="ConsoleMenuProvider.cs" t="Include" />
+        <e p="ConsoleMenuRenderer.cs" t="Include" />
+        <e p="ConsoleMethod.cs" t="Include" />
+        <e p="ExitDelegate.cs" t="Include" />
+        <e p="IInfoAttribute.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.sys.console.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+      </e>
+      <e p="submodules\bam.sys.console\bam.sys.console.tests\bam.sys.console.tests" t="IncludeRecursive">
+        <e p="bam.sys.console.tests.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.sys.console.tests.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Program.cs" t="Include" />
+        <e p="TestClasses" t="Include">
+          <e p="SysConsoleTestMenuClass.cs" t="Include" />
+        </e>
+      </e>
+      <e p="submodules\bam.testing\bam.testing" t="IncludeRecursive">
+        <e p="After.cs" t="Include" />
+        <e p="AfterEachUnitTest.cs" t="Include" />
+        <e p="AfterUnitTests.cs" t="Include" />
+        <e p="Assertion.cs" t="Include" />
+        <e p="AssertionProvider.cs" t="Include" />
+        <e p="bam.testing.csproj" t="IncludeRecursive" />
+        <e p="Because.cs" t="Include" />
+        <e p="BeforeEachUnitTest.cs" t="Include" />
+        <e p="BeforeUnitTests.cs" t="Include" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="CommandLineTestInterface.cs" t="Include" />
+        <e p="CommandLineTestTool.cs" t="Include" />
+        <e p="ConsoleBecauseWriter.cs" t="Include" />
+        <e p="Data" t="Include">
+          <e p="TestResult.cs" t="Include" />
+        </e>
+        <e p="FailedTest.cs" t="Include" />
+        <e p="IAssertionWriter.cs" t="Include" />
+        <e p="IBecauseWriter.cs" t="Include" />
+        <e p="Integration" t="Include">
+          <e p="IntegrationTestAttribute.cs" t="Include" />
+          <e p="IntegrationTestCleanupAttribute.cs" t="Include" />
+          <e p="IntegrationTestContainerAttribute.cs" t="Include" />
+          <e p="IntegrationTestMethod.cs" t="Include" />
+          <e p="IntegrationTestRunner.cs" t="Include" />
+          <e p="IntegrationTestSetupAttribute.cs" t="Include" />
+        </e>
+        <e p="ISetupMethodProvider.cs" t="Include" />
+        <e p="ITeardownMethodProvider.cs" t="Include" />
+        <e p="ITestRunListener.cs" t="Include" />
+        <e p="ITestRunner.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.testing.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="SetupContext.cs" t="Include" />
+        <e p="Specification" t="Include">
+          <e p="AssertionAction.cs" t="Include" />
+          <e p="AssertionFunc.cs" t="Include" />
+          <e p="ButAction.cs" t="Include" />
+          <e p="ButDelegate.cs" t="Include" />
+          <e p="ConsoleSpecTestReporter.cs" t="Include" />
+          <e p="FeatureContext.cs" t="Include" />
+          <e p="FeatureContextSetup.cs" t="Include" />
+          <e p="FeatureSetupFailedException.cs" t="Include" />
+          <e p="ISpecTestContextSetup.cs" t="Include" />
+          <e p="ItContext.cs" t="Include" />
+          <e p="ScenarioContext.cs" t="Include" />
+          <e p="ScenarioSetupAction.cs" t="Include" />
+          <e p="ScenarioSetupContext.cs" t="Include" />
+          <e p="SpecTestAttribute.cs" t="Include" />
+          <e p="SpecTestContainer.cs" t="Include" />
+          <e p="SpecTestContextSetup.cs" t="Include" />
+          <e p="SpecTestEventArgs.cs" t="Include" />
+          <e p="SpecTestFailedException.cs" t="Include" />
+          <e p="SpecTestMethod.cs" t="Include" />
+          <e p="SpecTestMethodProvider.cs" t="Include" />
+          <e p="SpecTestReporter.cs" t="Include" />
+          <e p="SpecTestRunner.cs" t="Include" />
+          <e p="SpecTestSetupMethodProvider.cs" t="Include" />
+          <e p="SpecTestTeardownMethodProvider.cs" t="Include" />
+          <e p="ThenAction.cs" t="Include" />
+          <e p="ThenDelegate.cs" t="Include" />
+          <e p="WhenAction.cs" t="Include" />
+        </e>
+        <e p="TestContext.cs" t="Include" />
+        <e p="TestEventArgs.cs" t="Include" />
+        <e p="TestExceptionEventArgs.cs" t="Include" />
+        <e p="TestGroupAttribute.cs" t="Include" />
+        <e p="TestIgnoredEventArgs.cs" t="Include" />
+        <e p="TestMethod.cs" t="Include" />
+        <e p="TestMethodDescriptor.cs" t="Include" />
+        <e p="TestMethodProvider.cs" t="Include" />
+        <e p="TestMethodRunner.cs" t="Include" />
+        <e p="TestRunListener.cs" t="Include" />
+        <e p="TestRunner.cs" t="Include" />
+        <e p="TestRunnerSummary.cs" t="Include" />
+        <e p="TestsDiscoveredEventArgs.cs" t="Include" />
+        <e p="TestSuiteAttribute.cs" t="Include" />
+        <e p="TestType.cs" t="Include" />
+        <e p="Unit" t="Include">
+          <e p="UnitTestAttribute.cs" t="Include" />
+          <e p="UnitTestMethod.cs" t="Include" />
+          <e p="UnitTestMethodProvider.cs" t="Include" />
+          <e p="UnitTestRunListener.cs" t="Include" />
+          <e p="UnitTestRunner.cs" t="Include" />
+          <e p="UnitTestSetupMethodProvider.cs" t="Include" />
+          <e p="UnitTestTeardownMethodProvider.cs" t="Include" />
+        </e>
+        <e p="UnitTestFailure.cs" t="Include" />
+        <e p="UnitTestMethodRunner.cs" t="Include" />
+        <e p="When.cs" t="Include" />
+      </e>
+      <e p="submodules\bam.useraccounts\bam.useraccounts" t="IncludeRecursive">
+        <e p="_UserAccounts" t="Include">
+          <e p="UserNameInUseException.cs" t="Include" />
+        </e>
+        <e p="bam.useraccounts.csproj" t="IncludeRecursive" />
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="CredentialInfo.cs" t="Include" />
+        <e p="CredentialProvider.cs" t="Include" />
+        <e p="DefaultConfigurationCredentialProvider.cs" t="Include" />
+        <e p="EmailComposer.cs" t="Include" />
+        <e p="EmailTemplate.cs" t="Include" />
+        <e p="ICredentialManager.cs" t="Include" />
+        <e p="ICredentialProvider.cs" t="Include" />
+        <e p="INamedCredentialProvider.cs" t="Include" />
+        <e p="IRoleResolver.cs" t="Include" />
+        <e p="IServiceCredentialProvider.cs" t="Include" />
+        <e p="NamedFormatEmailComposer.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bam.useraccounts.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="RoleRequiredAttribute.cs" t="Include" />
+        <e p="UserAccountResponse.cs" t="Include" />
+        <e p="UserAccounts" t="Include">
+          <e p="AccountConfirmationEmailData.cs" t="Include" />
+          <e p="AccountCreationFailedException.cs" t="Include" />
+          <e p="Authenticator.cs" t="Include" />
+          <e p="CheckEmailResponse.cs" t="Include" />
+          <e p="CheckUserNameResponse.cs" t="Include" />
+          <e p="CompositeAuthenticator.cs" t="Include" />
+          <e p="ConfirmResponse.cs" t="Include" />
+          <e p="EmailAlreadyRegisteredException.cs" t="Include" />
+          <e p="ForgotPasswordResponse.cs" t="Include" />
+          <e p="IAuthenticator.cs" t="Include" />
+          <e p="IDaoUserResolver.cs" t="Include" />
+          <e p="InvalidTokenException.cs" t="Include" />
+          <e p="IRoleProvider.cs" t="Include" />
+          <e p="IRoleReader.cs" t="Include" />
+          <e p="IsAuthenticatedResponse.cs" t="Include" />
+          <e p="IUserProvider.cs" t="Include" />
+          <e p="LoginResponse.cs" t="Include" />
+          <e p="NullException.cs" t="Include" />
+          <e p="PasswordResetEmailData.cs" t="Include" />
+          <e p="PasswordResetPageResponse.cs" t="Include" />
+          <e p="PasswordResetResponse.cs" t="Include" />
+          <e p="RequestEmailResponse.cs" t="Include" />
+          <e p="SendEmailResponse.cs" t="Include" />
+          <e p="SignOutResponse.cs" t="Include" />
+          <e p="SignUpOptions.cs" t="Include" />
+          <e p="SignUpResponse.cs" t="Include" />
+          <e p="UserAccounts.db.js" t="Include" />
+          <e p="UserAccountsDatabase.cs" t="Include" />
+          <e p="UserInfo.cs" t="Include" />
+          <e p="UserManagerConfig.cs" t="Include" />
+          <e p="UserNameNotFoundException.cs" t="Include" />
+        </e>
+      </e>
+      <e p="submodules\bamdb\bamdb" t="IncludeRecursive">
+        <e p="_._" t="Include" />
+        <e p="bamdb.csproj" t="IncludeRecursive" />
+        <e p="bamdb.nuspec" t="Include" />
+        <e p="obj" t="ExcludeRecursive" />
+        <e p="Program.cs" t="Include" />
+      </e>
+      <e p="submodules\bamtest\bamtest" t="IncludeRecursive">
+        <e p="bamtest.csproj" t="IncludeRecursive" />
+        <e p="ConsoleActions.cs" t="Include" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="net7.0" t="Include">
+              <e p="bamtest.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Program.cs" t="Include" />
+      </e>
+      <e p="tools" t="Include">
+        <e p="bamdb" t="Include" />
+        <e p="bamtest" t="Include" />
+      </e>
+    </e>
+    <e p="C:\Users\bryan.THREEHEADZ\.bam\build\Debug\bam.base\net7.0" t="ExcludeRecursive" />
+    <e p="C:\Users\bryan.THREEHEADZ\.bam\build\Debug\bamdb\net7.0" t="ExcludeRecursive" />
+    <e p="C:\Users\bryan.THREEHEADZ\.bam\build\Debug\bamtest\net7.0" t="ExcludeRecursive" />
+    <e p="C:\Users\bryan.THREEHEADZ\.Rider2019.2\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\bryan.THREEHEADZ\.Rider2019.2\system\resharper-host\local\Transient\ReSharperHost\v192\SolutionCaches\_bamtk.2032054864.00" t="ExcludeRecursive" />
+  </component>
+</project>
