@@ -1,7 +1,7 @@
 ﻿using Bam.Command;
 using Bam.Console;
-using Bam.Net;
-using Bam.Net.CoreServices;
+using Bam;
+using Bam.CoreServices;
 using Bam.Testing;
 using Bam.Tests.TestClasses;
 using System;

@@ -1,5 +1,5 @@
 using Bam.Command;
-using Bam.Net;
+using Bam;
 
 namespace Bam.Tools;
 
