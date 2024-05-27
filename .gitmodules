@@ -115,3 +115,6 @@
 [submodule "submodules/bam.data.objects"]
 	path = submodules/bam.data.objects
 	url = git@github.com:BryanApellanes/bam.data.objects.git
+[submodule "submodules/git-jira"]
+	path = submodules/git-jira
+	url = git@github.com:BryanApellanes/git-jira.git
