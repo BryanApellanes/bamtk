@@ -118,3 +118,6 @@
 [submodule "submodules/git-jira"]
 	path = submodules/git-jira
 	url = git@github.com:BryanApellanes/git-jira.git
+[submodule "submodules/bamux"]
+	path = submodules/bamux
+	url = git@github.com:BryanApellanes/bamux.git
