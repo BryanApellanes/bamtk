@@ -121,3 +121,6 @@
 [submodule "submodules/bamux"]
 	path = submodules/bamux
 	url = git@github.com:BryanApellanes/bamux.git
+[submodule "submodules/bam.data.graph"]
+	path = submodules/bam.data.graph
+	url = git@github.com:BryanApellanes/Bam.Net.Data.GraphQL.git
