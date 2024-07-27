@@ -15,7 +15,7 @@
     <ProjectReference Include="..\submodules\bam.data.repositories\bam.data.repositories\bam.data.repositories.csproj" />
     <ProjectReference Include="..\submodules\bam.data.schema\bam.data.schema\bam.data.schema.csproj" />
     <ProjectReference Include="..\submodules\bam.data\bam.data\bam.data.csproj" />
-    <ProjectReference Include="..\submodules\bam.testing\bam.testing\bam.testing.csproj" />
+    <ProjectReference Include="..\submodules\bam.test\bam.test\bam.test.csproj" />
   </ItemGroup>
 
 </Project>
