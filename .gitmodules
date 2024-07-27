@@ -46,9 +46,6 @@
 [submodule "submodules/bam.sys"]
 	path = submodules/bam.sys
 	url = git@github.com:BryanApellanes/bam.sys.git
-[submodule "submodules/bam.testing"]
-	path = submodules/bam.testing
-	url = git@github.com:BryanApellanes/bam.testing.git
 [submodule "submodules/bam.useraccounts"]
 	path = submodules/bam.useraccounts
 	url = git@github.com:BryanApellanes/bam.useraccounts.git
@@ -124,3 +121,6 @@
 [submodule "submodules/bam.data.graph"]
 	path = submodules/bam.data.graph
 	url = git@github.com:BryanApellanes/Bam.Net.Data.GraphQL.git
+[submodule "submodules/bam.test"]
+	path = submodules/bam.test
+	url = git@github.com:BryanApellanes/bam.test.git
