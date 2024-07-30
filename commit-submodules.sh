@@ -40,6 +40,7 @@ for SUBMODULE in "${SUBMODULES[@]}"; do
   pushd $SUBMODULE > /dev/null
   STATUS=$(git status --porcelain | wc -l)
   if [[ -f "./commit-submodules.sh" ]]; then
+    echo `pwd`
     ./commit-submodules.sh ${1}
   fi
   if [[ $STATUS -ne 0 ]]; then
