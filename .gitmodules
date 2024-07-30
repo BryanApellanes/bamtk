@@ -43,9 +43,6 @@
 [submodule "submodules/bam.storage"]
 	path = submodules/bam.storage
 	url = git@github.com:BryanApellanes/bam.storage.git
-[submodule "submodules/bam.sys"]
-	path = submodules/bam.sys
-	url = git@github.com:BryanApellanes/bam.sys.git
 [submodule "submodules/bam.useraccounts"]
 	path = submodules/bam.useraccounts
 	url = git@github.com:BryanApellanes/bam.useraccounts.git
@@ -55,9 +52,6 @@
 [submodule "submodules/bamdb"]
 	path = submodules/bamdb
 	url = git@github.com:BryanApellanes/bamdb.git
-[submodule "submodules/bam.sys.console"]
-	path = submodules/bam.sys.console
-	url = git@github.com:BryanApellanes/bam.sys.console.git
 [submodule "submodules/bambot"]
 	path = submodules/bambot
 	url = git@github.com:BryanApellanes/bambot.git
