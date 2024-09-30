@@ -193,6 +193,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bam.test", "bam.test", "{9D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.test", "submodules\bam.test\bam.test\bam.test.csproj", "{272EFDEC-B71B-4767-8614-242EC73D9F73}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "oax", "submodules\bam.openapi\oax\oax.csproj", "{70520924-6FB8-40D3-A3E2-BB326B21A7AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -431,6 +433,10 @@ Global
 		{272EFDEC-B71B-4767-8614-242EC73D9F73}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{272EFDEC-B71B-4767-8614-242EC73D9F73}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{272EFDEC-B71B-4767-8614-242EC73D9F73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70520924-6FB8-40D3-A3E2-BB326B21A7AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70520924-6FB8-40D3-A3E2-BB326B21A7AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70520924-6FB8-40D3-A3E2-BB326B21A7AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70520924-6FB8-40D3-A3E2-BB326B21A7AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -526,6 +532,7 @@ Global
 		{F0A44838-AACD-4DB2-9662-D2C413CDE23A} = {13B31AC4-CEF6-41F5-904A-570D1DBDA2AC}
 		{9D46AB24-9267-43A3-855C-6947E7AFD39A} = {AE19C89E-37FD-4B04-AAA3-C482619D5F6A}
 		{272EFDEC-B71B-4767-8614-242EC73D9F73} = {9D46AB24-9267-43A3-855C-6947E7AFD39A}
+		{70520924-6FB8-40D3-A3E2-BB326B21A7AA} = {0BB93F4E-B47B-4B4B-B386-8E21073EE311}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {128B88FB-74C7-4070-AD2C-1D67B387BD42}
