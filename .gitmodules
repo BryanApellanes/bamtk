@@ -118,6 +118,3 @@
 [submodule "submodules/bam.test"]
 	path = submodules/bam.test
 	url = git@github.com:BryanApellanes/bam.test.git
-[submodule "submodules/bizmauth"]
-	path = submodules/bizmauth
-	url = git@github.com:BryanApellanes/bizmauth.git
