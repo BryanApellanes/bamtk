@@ -201,6 +201,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.base.transformers.tests
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "oax", "oax", "{87ADEBA8-25AA-45B1-8A79-3D22FC88D281}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaoTest", "..\DaoTest\DaoTest\DaoTest.csproj", "{49EC87D7-FFE2-436A-B321-65CC3FF06ECC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.openapi.generator", "submodules\bam.openapi\bam.openapi.generator\bam.openapi.generator.csproj", "{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -451,6 +455,14 @@ Global
 		{658B1F51-A65F-4905-A17F-B8977784A632}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{658B1F51-A65F-4905-A17F-B8977784A632}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{658B1F51-A65F-4905-A17F-B8977784A632}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49EC87D7-FFE2-436A-B321-65CC3FF06ECC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49EC87D7-FFE2-436A-B321-65CC3FF06ECC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49EC87D7-FFE2-436A-B321-65CC3FF06ECC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49EC87D7-FFE2-436A-B321-65CC3FF06ECC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -550,6 +562,8 @@ Global
 		{658B1F51-A65F-4905-A17F-B8977784A632} = {D1F91E7A-CCCB-47A9-B032-82C5D315D305}
 		{87ADEBA8-25AA-45B1-8A79-3D22FC88D281} = {D7238B19-AA0A-4B2B-B411-F9E3C565DB5D}
 		{70520924-6FB8-40D3-A3E2-BB326B21A7AA} = {87ADEBA8-25AA-45B1-8A79-3D22FC88D281}
+		{49EC87D7-FFE2-436A-B321-65CC3FF06ECC} = {221815DB-63C6-423F-A6E3-BBCBB0498C8B}
+		{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95} = {0BB93F4E-B47B-4B4B-B386-8E21073EE311}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {128B88FB-74C7-4070-AD2C-1D67B387BD42}
