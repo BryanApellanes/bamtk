@@ -205,6 +205,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaoTest", "..\DaoTest\DaoTe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.openapi.generator", "submodules\bam.openapi\bam.openapi.generator\bam.openapi.generator.csproj", "{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.server.tests", "submodules\bam.server\bam.server.tests\bam.server.tests.csproj", "{2E9EE892-9D59-4218-B764-CF52B02FFBE7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -463,6 +465,10 @@ Global
 		{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E9EE892-9D59-4218-B764-CF52B02FFBE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E9EE892-9D59-4218-B764-CF52B02FFBE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E9EE892-9D59-4218-B764-CF52B02FFBE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E9EE892-9D59-4218-B764-CF52B02FFBE7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -564,6 +570,7 @@ Global
 		{70520924-6FB8-40D3-A3E2-BB326B21A7AA} = {87ADEBA8-25AA-45B1-8A79-3D22FC88D281}
 		{49EC87D7-FFE2-436A-B321-65CC3FF06ECC} = {221815DB-63C6-423F-A6E3-BBCBB0498C8B}
 		{19EF38F0-F294-4BA6-8DE8-7D64CB85BA95} = {0BB93F4E-B47B-4B4B-B386-8E21073EE311}
+		{2E9EE892-9D59-4218-B764-CF52B02FFBE7} = {EE3E7322-5796-41AE-B092-D19AFAFF1F83}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {128B88FB-74C7-4070-AD2C-1D67B387BD42}
