@@ -7,9 +7,6 @@
 [submodule "submodules/bam.caching"]
 	path = submodules/bam.caching
 	url = git@github.com:BryanApellanes/bam.caching.git
-[submodule "submodules/bam.commandline"]
-	path = submodules/bam.commandline
-	url = git@github.com:BryanApellanes/bam.commandline.git
 [submodule "submodules/bam.configuration"]
 	path = submodules/bam.configuration
 	url = git@github.com:BryanApellanes/bam.configuration.git
