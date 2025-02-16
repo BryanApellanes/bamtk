@@ -213,6 +213,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitJira", "submodules\git-j
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitJira.Tests", "submodules\git-jira\GitJira.Tests\GitJira.Tests.csproj", "{2EBE6A70-AB89-4908-B825-4030D9CB77BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.test.tests", "submodules\bam.test\bam.test.tests\bam.test.tests.csproj", "{A16D8A33-63B3-4EE7-ABA0-0926BB5CF3C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -483,6 +485,10 @@ Global
 		{2EBE6A70-AB89-4908-B825-4030D9CB77BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EBE6A70-AB89-4908-B825-4030D9CB77BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2EBE6A70-AB89-4908-B825-4030D9CB77BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A16D8A33-63B3-4EE7-ABA0-0926BB5CF3C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A16D8A33-63B3-4EE7-ABA0-0926BB5CF3C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A16D8A33-63B3-4EE7-ABA0-0926BB5CF3C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A16D8A33-63B3-4EE7-ABA0-0926BB5CF3C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -588,6 +594,7 @@ Global
 		{2FBF83DF-BDCA-46EC-AA39-F1E42C40E0EF} = {D7238B19-AA0A-4B2B-B411-F9E3C565DB5D}
 		{B274E858-21A2-4F61-8649-59B8BA0DDBB0} = {2FBF83DF-BDCA-46EC-AA39-F1E42C40E0EF}
 		{2EBE6A70-AB89-4908-B825-4030D9CB77BA} = {2FBF83DF-BDCA-46EC-AA39-F1E42C40E0EF}
+		{A16D8A33-63B3-4EE7-ABA0-0926BB5CF3C3} = {9D46AB24-9267-43A3-855C-6947E7AFD39A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {128B88FB-74C7-4070-AD2C-1D67B387BD42}

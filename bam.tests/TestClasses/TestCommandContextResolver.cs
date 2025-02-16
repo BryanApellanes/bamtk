@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bam.Tests.TestClasses
+﻿namespace Bam.Tests.TestClasses
 {
     public class TestCommandContextResolver : CommandContextResolver
     {
