@@ -1,5 +1,6 @@
 ﻿using Bam.Command;
 using Bam.Console;
+using Bam.DependencyInjection;
 using Bam.Services;
 
 namespace Bam

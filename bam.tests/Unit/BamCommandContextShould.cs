@@ -1,7 +1,7 @@
 ﻿using Bam.Command;
+using Bam.DependencyInjection;
 using Bam.Test;
 using Bam.Tests.TestClasses;
-using Bam.Services;
 
 namespace Bam.Tests.Unit
 {
