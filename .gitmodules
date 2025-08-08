@@ -118,3 +118,6 @@
 [submodule "submodules/legacy/bam.net.shared"]
 	path = submodules/legacy/bam.net.shared
 	url = git@github.com:BryanApellanes/bam.net.shared.git
+[submodule "submodules/bake"]
+	path = submodules/bake
+	url = git@github.com:BryanApellanes/bake.git
