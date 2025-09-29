@@ -121,3 +121,6 @@
 [submodule "submodules/bake"]
 	path = submodules/bake
 	url = git@github.com:BryanApellanes/bake.git
+[submodule "submodules/bam.activity"]
+	path = submodules/bam.activity
+	url = git@github.com:BryanApellanes/bam.activity.git
