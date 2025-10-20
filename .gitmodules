@@ -124,3 +124,6 @@
 [submodule "submodules/bam.activity"]
 	path = submodules/bam.activity
 	url = git@github.com:BryanApellanes/bam.activity.git
+[submodule "submodules/bam.maui"]
+	path = submodules/bam.maui
+	url = git@github.com:BryanApellanes/bam.maui.git
