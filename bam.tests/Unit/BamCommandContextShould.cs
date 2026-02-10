@@ -17,23 +17,35 @@ namespace Bam.Tests.Unit
         {
             ServiceRegistry svcRegistry = BamCommandContext.Current.ServiceRegistry;
 
-            IBrokeredCommandContextResolver commandContextResolver = svcRegistry.Get<IBrokeredCommandContextResolver>();
+            When.A<ServiceRegistry>("uses configured context resolver generic type",
+                svcRegistry,
+                (reg) =>
+                {
+                    IBrokeredCommandContextResolver resolver = reg.Get<IBrokeredCommandContextResolver>();
+                    bool isDefaultType = resolver is ProcessCommandContextResolver;
 
-            // The default type is ProcessCommandContextResolver set by BamCommandContext.GetServiceRegitry()
-            commandContextResolver.ShouldBeOfType<ProcessCommandContextResolver>();
+                    reg.For<IBrokeredCommandContextResolver>().Use<TestCommandContextResolver>();
+                    resolver = reg.Get<IBrokeredCommandContextResolver>();
+                    bool isTestType = resolver is TestCommandContextResolver;
 
-            svcRegistry.For<IBrokeredCommandContextResolver>().Use<TestCommandContextResolver>();
+                    bool registryIsSame = BamCommandContext.Current.ServiceRegistry == reg;
 
-            commandContextResolver = svcRegistry.Get<IBrokeredCommandContextResolver>();
+                    resolver = BamCommandContext.Current.ServiceRegistry.Get<IBrokeredCommandContextResolver>();
+                    bool singletonIsTestType = resolver is TestCommandContextResolver;
 
-            commandContextResolver.ShouldBeOfType<TestCommandContextResolver>();
-
-            BamCommandContext.Current.ServiceRegistry.ShouldBe(svcRegistry);
-
-            commandContextResolver = BamCommandContext.Current.ServiceRegistry
-                .Get<IBrokeredCommandContextResolver>();
-            
-            commandContextResolver.ShouldBeOfType<TestCommandContextResolver>($"Should have been of type {nameof(TestCommandContextResolver)} but was {commandContextResolver.GetType().Name}");
+                    return new object[] { isDefaultType, isTestType, registryIsSame, singletonIsTestType };
+                })
+            .TheTest
+            .ShouldPass(because =>
+            {
+                object[] r = (object[])because.Result;
+                because.ItsTrue("default resolver is ProcessCommandContextResolver", (bool)r[0]);
+                because.ItsTrue("replaced resolver is TestCommandContextResolver", (bool)r[1]);
+                because.ItsTrue("ServiceRegistry is same instance", (bool)r[2]);
+                because.ItsTrue("singleton returns TestCommandContextResolver", (bool)r[3]);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
         }
 
         [UnitTest(RunSynchronously = true)]
@@ -41,22 +53,36 @@ namespace Bam.Tests.Unit
         {
             ServiceRegistry svcRegistry = BamCommandContext.Current.ServiceRegistry;
 
-            IBrokeredCommandContextResolver commandContextResolver = svcRegistry.Get<IBrokeredCommandContextResolver>();
+            When.A<ServiceRegistry>("uses configured context resolver instanciator",
+                svcRegistry,
+                (reg) =>
+                {
+                    reg.For<IBrokeredCommandContextResolver>().Use<ProcessCommandContextResolver>();
+                    IBrokeredCommandContextResolver resolver = reg.Get<IBrokeredCommandContextResolver>();
+                    bool isDefaultType = resolver is ProcessCommandContextResolver;
 
-            // The default type is ProcessCommandContextResolver set by BamCommandContext.GetServiceRegistry()
-            commandContextResolver.ShouldBeOfType<ProcessCommandContextResolver>();
+                    reg.For<IBrokeredCommandContextResolver>().Use(() => new TestCommandContextResolver());
+                    resolver = reg.Get<IBrokeredCommandContextResolver>();
+                    bool isTestType = resolver is TestCommandContextResolver;
 
-            svcRegistry.For<IBrokeredCommandContextResolver>().Use(() => new TestCommandContextResolver());
+                    bool registryIsSame = BamCommandContext.Current.ServiceRegistry == reg;
 
-            commandContextResolver = svcRegistry.Get<IBrokeredCommandContextResolver>();
-            commandContextResolver.ShouldBeOfType<TestCommandContextResolver>();
+                    resolver = BamCommandContext.Current.ServiceRegistry.Get<IBrokeredCommandContextResolver>();
+                    bool singletonIsTestType = resolver is TestCommandContextResolver;
 
-            BamCommandContext.Current.ServiceRegistry.ShouldBe(svcRegistry);
-
-            // Make sure the static singleton returns expected instance
-            commandContextResolver = BamCommandContext.Current.ServiceRegistry
-                .Get<IBrokeredCommandContextResolver>();
-            commandContextResolver.ShouldBeOfType<TestCommandContextResolver>($"Should have been of type {nameof(TestCommandContextResolver)} but was {commandContextResolver.GetType().Name}");
+                    return new object[] { isDefaultType, isTestType, registryIsSame, singletonIsTestType };
+                })
+            .TheTest
+            .ShouldPass(because =>
+            {
+                object[] r = (object[])because.Result;
+                because.ItsTrue("default resolver is ProcessCommandContextResolver", (bool)r[0]);
+                because.ItsTrue("replaced resolver is TestCommandContextResolver", (bool)r[1]);
+                because.ItsTrue("ServiceRegistry is same instance", (bool)r[2]);
+                because.ItsTrue("singleton returns TestCommandContextResolver", (bool)r[3]);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
         }
 
         [UnitTest(RunSynchronously = true)]
@@ -64,28 +90,47 @@ namespace Bam.Tests.Unit
         {
             ServiceRegistry svcRegistry = BamCommandContext.Current.ServiceRegistry;
 
-            IBrokeredCommandContextResolver commandContextResolver = svcRegistry.Get<IBrokeredCommandContextResolver>();
+            When.A<ServiceRegistry>("uses configured context resolver parameterized instanciator",
+                svcRegistry,
+                (reg) =>
+                {
+                    reg.For<IBrokeredCommandContextResolver>().Use<ProcessCommandContextResolver>();
+                    IBrokeredCommandContextResolver resolver = reg.Get<IBrokeredCommandContextResolver>();
+                    bool isDefaultType = resolver is ProcessCommandContextResolver;
 
-            // The default type is ProcessCommandContextResolver set by BamCommandContext.GetServiceRegitry()
-            commandContextResolver.ShouldBeOfType<ProcessCommandContextResolver>();
+                    reg.For<IBrokeredCommandContextResolver>().Use((svcReg) => new TestCommandContextResolver(svcReg.Get<IBamBrokeredCommandContext>()));
+                    resolver = reg.Get<IBrokeredCommandContextResolver>();
 
-            svcRegistry.For<IBrokeredCommandContextResolver>().Use((svcReg) => new TestCommandContextResolver(svcReg.Get<IBamBrokeredCommandContext>()));
+                    bool isTestType = resolver is TestCommandContextResolver;
+                    TestCommandContextResolver testResolver = (TestCommandContextResolver)resolver;
+                    bool contextNotNull = testResolver.Context != null;
+                    bool contextIsBamCommandContext = testResolver.Context is BamCommandContext;
 
-            commandContextResolver = svcRegistry.Get<IBrokeredCommandContextResolver>();
+                    bool registryIsSame = BamCommandContext.Current.ServiceRegistry == reg;
 
-            commandContextResolver.ShouldBeOfType<TestCommandContextResolver>();
-            TestCommandContextResolver testCommandContextResolver = ((TestCommandContextResolver)commandContextResolver);
-            testCommandContextResolver.Context.ShouldNotBeNull();
-            testCommandContextResolver.Context.ShouldBeOfType<BamCommandContext>();
-            BamCommandContext.Current.ServiceRegistry.ShouldBe(svcRegistry);
+                    resolver = BamCommandContext.Current.ServiceRegistry.Get<IBrokeredCommandContextResolver>();
+                    bool singletonIsTestType = resolver is TestCommandContextResolver;
+                    testResolver = (TestCommandContextResolver)resolver;
+                    bool singletonContextNotNull = testResolver.Context != null;
+                    bool singletonContextIsBamCommandContext = testResolver.Context is BamCommandContext;
 
-            // Make sure the static singleton returns expected instance
-            commandContextResolver = BamCommandContext.Current.ServiceRegistry
-                .Get<IBrokeredCommandContextResolver>();
-            commandContextResolver.ShouldBeOfType<TestCommandContextResolver>($"Should have been of type {nameof(TestCommandContextResolver)} but was {commandContextResolver.GetType().Name}");
-            testCommandContextResolver = ((TestCommandContextResolver)commandContextResolver);
-            testCommandContextResolver.Context.ShouldNotBeNull();
-            testCommandContextResolver.Context.ShouldBeOfType<BamCommandContext>();
+                    return new object[] { isDefaultType, isTestType, contextNotNull, contextIsBamCommandContext, registryIsSame, singletonIsTestType, singletonContextNotNull, singletonContextIsBamCommandContext };
+                })
+            .TheTest
+            .ShouldPass(because =>
+            {
+                object[] r = (object[])because.Result;
+                because.ItsTrue("default resolver is ProcessCommandContextResolver", (bool)r[0]);
+                because.ItsTrue("replaced resolver is TestCommandContextResolver", (bool)r[1]);
+                because.ItsTrue("Context is not null", (bool)r[2]);
+                because.ItsTrue("Context is BamCommandContext", (bool)r[3]);
+                because.ItsTrue("ServiceRegistry is same instance", (bool)r[4]);
+                because.ItsTrue("singleton returns TestCommandContextResolver", (bool)r[5]);
+                because.ItsTrue("singleton Context is not null", (bool)r[6]);
+                because.ItsTrue("singleton Context is BamCommandContext", (bool)r[7]);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
         }
     }
 }
