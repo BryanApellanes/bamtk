@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(xargs -I {} bash -c 'wc -l \"\"{}\"\"')",
+      "Bash(dotnet run:*)",
+      "WebSearch",
+      "Bash(dotnet:*)",
+      "Bash(\"$HOME/.bam/build/Debug/bamdb/net10.0/bamdb.exe\" /generateSchemaRepository \"/config:submodules/bamdb/bamdb/DaoRepoGenerationConfig/bam.protocol.data.profile.dao-repo-gen.yaml\" \"/o:submodules/bam.protocol/bam.protocol.data/Profile/Generated_Dao\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ls:*)",
+      "Bash(git status:*)",
+      "Bash(winget install:*)",
+      "Bash(dotnet-coverage merge:*)"
+    ]
+  }
+}

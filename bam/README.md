@@ -1,70 +1,71 @@
-# Bam Docs
-The `bam application management` tool provides a console/terminal/shell interface used to manage applications built on the `bam application management framework`.
+# bam
 
-## Set up
-### Prerequisites
-- git
-- docker
+Bam Framework CLI Tool -- the main command-line entry point for the Bam toolkit.
 
-### optional
-- protoc - for protocol buffers support
+## Overview
 
-### dotnet
-```
-dotnet tool install -g bam
-```
+The `bam` project is a .NET 10 console application that serves as the primary command-line interface for the Bam framework. It bootstraps a service registry, wires up command parsing and brokering infrastructure, and delegates execution to `BamCommandContext.Main`. The CLI supports both interactive menu-driven commands (via `ConsoleMenuContainer`) and process-based external tool invocation.
 
-### nodejs
-```
-npm install bam
-```
+The application uses a composite command resolution strategy: it merges menu commands (defined via `[ConsoleCommand]` attributes) with process commands (executables discovered on disk, including a `.bam/tools` directory). This allows users to extend the CLI by dropping executables into the tools folder without modifying source code.
 
-### python
-```
-pip install bam
-```
+The project is packaged as a NuGet tool (`bam` package, version 2.0.0) and publishes into `~/.bam/build/pack/`.
 
-## Sign Up
-```
-bam signup --email {emailaddress}
-```
+## Key Classes
 
-> NOTES: <br />
-alias for: <br /> &nbsp;
-bam org create --email {emailaddress} [--username {username}]
+| Class | Description |
+|-------|-------------|
+| `Program` | Entry point. Configures the `ServiceRegistry` with command infrastructure bindings and calls `BamCommandContext.Main`. |
+| `CompositeCommandBroker` | A `CommandBroker` that resolves commands from multiple sources (menus and processes) via `CompositeCommandContextResolver`. |
+| `CompositeCommandContextResolver` | Aggregates `MenuCommandContextResolver` and `ProcessCommandContextResolver` to load command contexts from both interactive menus and external executables. |
+| `CompositeCommandRunner` | Intended to run brokered commands from composite sources. **Not yet implemented.** |
+| `ConsoleCommands` | A sample `ConsoleMenuContainer` registered under the `"code"` menu, demonstrating `[ConsoleCommand]` usage with string parameters and a default command. |
+| `ToolsProcessCommandContextResolver` | Extends `ProcessCommandContextResolver` to search `.bam/tools` alongside default directories for executable commands. |
 
-## Authentication
-```
-bam authenticate
-```
+## Dependencies
 
-> NOTES: <br /> &nbsp;
-alias for: bam request authentication --user {username}
+### Project References
+- `bam.base` -- core framework primitives (`BamProfile`, `ServiceRegistry`, etc.)
+- `bam.command` -- command brokering, parsing, and execution infrastructure (`BamCommandContext`, `CommandBroker`, `ProcessCommandContextResolver`, etc.)
 
-## Show
-```
-bam show
+### Package References
+None (relies solely on project references).
+
+## Usage Examples
+
+### Running the CLI
+```bash
+dotnet run --project bam/bam.csproj -- <command> [arguments]
 ```
 
-> NOTES: <br />&nbsp;
-This command should show the current configuration.  Define a configuration object that is yaml serialized to .bam/.config
+### Defining a new console command
+```csharp
+using Bam.Console;
+using Bam.DependencyInjection;
+using Bam.Services;
 
-## Whoami
-```
-bam whoami
+[ConsoleMenu("mycommands")]
+public class MyCommands : ConsoleMenuContainer
+{
+    public MyCommands(ServiceRegistry serviceRegistry) : base(serviceRegistry) { }
+
+    public override ServiceRegistry Configure(ServiceRegistry serviceRegistry) => serviceRegistry;
+
+    [ConsoleCommand("greet")]
+    public void Greet(string name)
+    {
+        Message.PrintLine("Hello, {0}!", name);
+    }
+}
 ```
 
-## Create Application
-```
-bam app create --name {your-app-name}
+### Registering a custom command broker
+```csharp
+ServiceRegistry registry = BamCommandContext.Current.ServiceRegistry;
+registry
+    .For<ICommandBroker>().Use<CompositeCommandBroker>();
 ```
 
-## Main.md
+## Known Gaps / Not Yet Implemented
 
-```bam://*/data
-
-typeName: Item
-id: ulong
-name: string
-description: 
-```
+- **`CompositeCommandRunner.Run`** -- The `Run` method throws `NotImplementedException`. It is declared but has no functional implementation, meaning composite command execution through this runner is not yet operational.
+- **`ConsoleCommands`** -- Contains only demonstration/test commands (`testWithStringParameters`, `SomeRandomName`, `another`, `DEFAULT`). No production commands are defined in this menu container.
