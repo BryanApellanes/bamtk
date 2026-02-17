@@ -7,7 +7,7 @@
         {
             this.Context = context;
         }
-        public IBamContext Context { get; private set; }
+        public IBamContext? Context { get; private set; }
 
         public override IDictionary<string, IBrokeredCommandContext> LoadContexts()
         {
