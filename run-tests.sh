@@ -61,18 +61,6 @@ if [ -f "$COVERAGE_XML" ]; then
     if [ -f "$REPORT_FILE" ]; then
         echo ""
         echo "Coverage report: $REPORT_FILE"
-        echo "Opening in browser..."
-
-        # Open the report (cross-platform)
-        if command -v start &> /dev/null; then
-            start "$REPORT_FILE"
-        elif command -v xdg-open &> /dev/null; then
-            xdg-open "$REPORT_FILE"
-        elif command -v open &> /dev/null; then
-            open "$REPORT_FILE"
-        else
-            echo "Could not auto-open. Please open manually: $REPORT_FILE"
-        fi
     fi
 else
     echo ""
