@@ -1,6 +1,0 @@
-ReferenceAssemblies: C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\9.0.6\ref\net9.0
-GenDir: C:\src\repos\bamtk\.bam\gen\win
-BamProfileDir: C:\Users\bryan\.bam
-BamDir: C:\src\repos\bamtk\.bam
-ProcessProfileDir: C:\Users\bryan
-NugetPackageRoot: C:\Users\bryan\.bam\nupkg
