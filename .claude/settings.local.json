@@ -14,7 +14,15 @@
       "Bash(ls:*)",
       "Bash(git status:*)",
       "Bash(winget install:*)",
-      "Bash(dotnet-coverage merge:*)"
+      "Bash(dotnet-coverage merge:*)",
+      "Bash(git diff-tree:*)",
+      "Bash(bash run-tests.sh)",
+      "Bash(start:*)",
+      "Bash(echo:*)",
+      "Bash(reportgenerator:*)",
+      "Bash(bash -x run-tests.sh)",
+      "Bash(git rm:*)",
+      "Bash(bash -c 'bash run-tests.sh > /dev/null 2>&1; echo $?')"
     ]
   }
 }

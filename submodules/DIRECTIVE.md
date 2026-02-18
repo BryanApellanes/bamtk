@@ -1,0 +1,1 @@
+- FormatPart exists in both bam.data and bam.base, determine if they can be combined and propose a refactor to do so.
