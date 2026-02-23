@@ -1,0 +1,35 @@
+{
+  "stt": {
+    "provider": "vosk",
+    "language": "en-US",
+    "sampleRate": 16000
+  },
+  "tts": {
+    "provider": "sapi",
+    "rate": 1.0,
+    "volume": 0.8
+  },
+  "claude": {
+    "cliPath": "claude",
+    "planningModel": "sonnet",
+    "executionModel": "sonnet",
+    "planningBudgetUsd": 0.50,
+    "executionBudgetUsd": 5.00
+  },
+  "control": {
+    "executionKeyword": "proceed",
+    "confirmationTimeoutSeconds": 60,
+    "listeningTimeoutSeconds": 30,
+    "minIntentConfidence": 0.6,
+    "intentPhrases": {
+      "execute": ["proceed", "go ahead", "do it", "execute", "yes", "confirm"],
+      "repeat": ["repeat", "say again", "what was that", "again"],
+      "rephrase": ["rephrase", "try again", "different approach", "revise"],
+      "cancel": ["cancel", "stop", "abort", "nevermind", "forget it", "no"]
+    }
+  },
+  "hooks": {
+    "enablePreToolUseHook": true,
+    "ipcPort": 9847
+  }
+}
