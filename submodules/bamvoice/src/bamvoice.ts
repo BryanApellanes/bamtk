@@ -57,10 +57,13 @@ export async function createBamvoiceApp(config: BamvoiceConfig): Promise<Bamvoic
   // Initialize intent detector
   const intentDetector = new IntentDetector(config.control);
 
-  // Initialize hook bridge
+  // Initialize hook bridge (auto-retries if port is busy)
   const hookBridge = new HookBridge();
   if (config.hooks.enablePreToolUseHook) {
-    await hookBridge.start(config.hooks.ipcPort);
+    const actualPort = await hookBridge.start(config.hooks.ipcPort);
+    if (actualPort !== config.hooks.ipcPort) {
+      logger.info("Hook bridge using port %d (configured: %d)", actualPort, config.hooks.ipcPort);
+    }
   }
 
   // Wire up the voice controller

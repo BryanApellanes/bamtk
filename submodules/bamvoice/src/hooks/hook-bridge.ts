@@ -37,7 +37,24 @@ export class HookBridge {
     this.customHandler = handler;
   }
 
-  async start(port: number): Promise<void> {
+  async start(port: number, maxRetries = 5): Promise<number> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const tryPort = port + attempt;
+      try {
+        await this.listen(tryPort);
+        return tryPort;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === "EADDRINUSE" && attempt < maxRetries) {
+          logger.warn("Port %d in use, trying %d", tryPort, tryPort + 1);
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw new Error(`All ports ${port}-${port + maxRetries} in use`);
+  }
+
+  private listen(port: number): Promise<void> {
     return new Promise((resolve, reject) => {
       this.server = createServer((socket: Socket) => {
         this.handleConnection(socket);
