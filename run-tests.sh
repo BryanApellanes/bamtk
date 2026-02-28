@@ -9,6 +9,28 @@ TEST_DIR="$SCRIPT_DIR/.bam/tests"
 COVERAGE_XML="$TEST_DIR/bamtk.coverage.cobertura.xml"
 REPORT_DIR="$TEST_DIR/coverage-report"
 
+# Determine argument style from BAM_ARG_STYLE or platform default
+if [ -n "$BAM_ARG_STYLE" ]; then
+    ARG_STYLE="$BAM_ARG_STYLE"
+elif [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* || "$(uname -s)" == CYGWIN* || "$OS" == "Windows_NT" ]]; then
+    ARG_STYLE="Windows"
+else
+    ARG_STYLE="Posix"
+fi
+
+if [ "$ARG_STYLE" = "Windows" ]; then
+    PREFIX="/"
+    SEP=":"
+else
+    PREFIX="--"
+    SEP="="
+fi
+
+# Export so bamtest also picks up the style
+export BAM_ARG_STYLE="$ARG_STYLE"
+# Prevent MSYS/Git Bash from mangling /arg into C:/Program Files/Git/arg
+export MSYS_NO_PATHCONV=1
+
 # Ensure test output directory exists
 mkdir -p "$TEST_DIR"
 
@@ -27,16 +49,16 @@ else
 fi
 
 # Run tests from .bam/tests directory, discovering projects from the solution
-TEST_SWITCH="${1:---ut}"
-echo "Running tests from $TEST_DIR..."
+TEST_SWITCH="${1:-${PREFIX}ut}"
+echo "Running tests ($ARG_STYLE style) from $TEST_DIR..."
 pushd "$TEST_DIR" > /dev/null
 
 "$BAMTEST" \
     "$TEST_SWITCH" \
-    --sln="$SOLUTION" \
-    --coverage \
-    --coverage-output="$COVERAGE_XML" \
-    --coverage-format=cobertura
+    "${PREFIX}sln${SEP}${SOLUTION}" \
+    "${PREFIX}coverage" \
+    "${PREFIX}coverage-output${SEP}${COVERAGE_XML}" \
+    "${PREFIX}coverage-format${SEP}cobertura"
 
 popd > /dev/null
 
