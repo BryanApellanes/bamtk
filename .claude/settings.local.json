@@ -22,7 +22,8 @@
       "Bash(reportgenerator:*)",
       "Bash(bash -x run-tests.sh)",
       "Bash(git rm:*)",
-      "Bash(bash -c 'bash run-tests.sh > /dev/null 2>&1; echo $?')"
+      "Bash(bash -c 'bash run-tests.sh > /dev/null 2>&1; echo $?')",
+      "Bash(dir:*)"
     ]
   }
 }
