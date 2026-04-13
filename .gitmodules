@@ -127,3 +127,6 @@
 [submodule "submodules/bam.maui"]
 	path = submodules/bam.maui
 	url = git@github.com:BryanApellanes/bam.maui.git
+[submodule "submodules/bamd"]
+	path = submodules/bamd
+	url = git@github.com:BryanApellanes/bamd.git
