@@ -35,16 +35,28 @@ export BAM_ARG_STYLE="$ARG_STYLE"
 # Prevent MSYS/Git Bash from mangling /arg into C:/Program Files/Git/arg
 export MSYS_NO_PATHCONV=1
 
+# Convert a shell path to a native path for the Windows .NET toolchain.
+# On Git Bash/MSYS/Cygwin, dotnet/MSBuild are Windows executables and reject
+# unix-style "/c/..." paths (treated as switches -> MSB1001). cygpath -w yields
+# "C:\...". On Linux/macOS (no cygpath) the path is passed through unchanged.
+to_native() {
+    if command -v cygpath > /dev/null 2>&1; then
+        cygpath -w "$1"
+    else
+        printf '%s' "$1"
+    fi
+}
+
 # Ensure output directories exist
 mkdir -p "$ASSEMBLY_DIR"
 
 # Build bamtest
 echo "Building bamtest..."
-dotnet build "$BAMTEST_PROJECT" -c Release -v quiet
+dotnet build "$(to_native "$BAMTEST_PROJECT")" -c Release -v quiet
 
 # Build the solution with output directed to the run directory
 echo "Building solution to $ASSEMBLY_DIR..."
-dotnet build "$SOLUTION" -c Debug --output "$ASSEMBLY_DIR" -v quiet
+dotnet build "$(to_native "$SOLUTION")" -c Debug --output "$(to_native "$ASSEMBLY_DIR")" -v quiet
 
 # Determine the bamtest executable
 if [ -f "${BAMTEST_BIN}.exe" ]; then
@@ -64,9 +76,9 @@ pushd "$RUN_DIR" > /dev/null
 
 "$BAMTEST" \
     "$TEST_SWITCH" \
-    "${PREFIX}assemblyDir${SEP}${ASSEMBLY_DIR}" \
+    "${PREFIX}assemblyDir${SEP}$(to_native "$ASSEMBLY_DIR")" \
     "${PREFIX}coverage" \
-    "${PREFIX}coverage-output${SEP}${COVERAGE_XML}" \
+    "${PREFIX}coverage-output${SEP}$(to_native "$COVERAGE_XML")" \
     "${PREFIX}coverage-format${SEP}cobertura"
 
 popd > /dev/null
@@ -83,8 +95,8 @@ if [ -f "$COVERAGE_XML" ]; then
     fi
 
     reportgenerator \
-        "-reports:$COVERAGE_XML" \
-        "-targetdir:$REPORT_DIR" \
+        "-reports:$(to_native "$COVERAGE_XML")" \
+        "-targetdir:$(to_native "$REPORT_DIR")" \
         "-reporttypes:Html" \
         "-title:bamtk Test Coverage"
 
