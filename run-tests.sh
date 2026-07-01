@@ -47,7 +47,11 @@ to_native() {
     fi
 }
 
-# Ensure output directories exist
+# Start each run from a clean slate. Stale artifacts left in a prior run's
+# directory — most importantly a DAO test SQLite database in an outdated/invalid
+# schema state — can cause spurious, non-deterministic test failures. Rotate the
+# per-SHA run directory so every run regenerates its databases and assemblies.
+rm -rf "$RUN_DIR"
 mkdir -p "$ASSEMBLY_DIR"
 
 # Build bamtest

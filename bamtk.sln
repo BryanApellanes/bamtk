@@ -249,7 +249,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.services.windows", "sub
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.logging.windows", "submodules\bam.logging\bam.logging.windows\bam.logging.windows.csproj", "{28F747FD-ECF0-411C-B2BC-EA3D85ECEC5B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.ai.tests", "submodules\bambot\bam.ai.tests\bam.ai.tests.csproj", "{6B4E4D40-EF8D-41CA-B7EC-D7C00FC55A77}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bam.ai.examples", "submodules\bambot\bam.ai.examples\bam.ai.examples.csproj", "{6B4E4D40-EF8D-41CA-B7EC-D7C00FC55A77}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
