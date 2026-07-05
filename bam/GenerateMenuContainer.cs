@@ -1,5 +1,6 @@
 using Bam.Console;
 using Bam.DependencyInjection;
+using Bam.Shell;
 
 namespace Bam
 {
@@ -40,6 +41,7 @@ namespace Bam
         /// </summary>
         /// <param name="config">The generation config, deserialized from the <c>--config</c> YAML/JSON file by the brokered argument provider.</param>
         [ConsoleCommand("service-client", "Generate a strongly-typed BAM service client from a --config YAML/JSON file")]
+        [MenuItem]
         public void ServiceClient(BamServiceClientGenerationConfig config)
         {
             string outputPath = new GenerateServiceClientCommand().Execute(config);
@@ -52,6 +54,7 @@ namespace Bam
         /// <see cref="ServiceClient"/>. Mirrors the <c>initConfig</c> convention of the other generator tools.
         /// </summary>
         [ConsoleCommand("service-client-init", "Write a starter service-client generation config (YAML) to the current directory")]
+        [MenuItem]
         public void ServiceClientInit()
         {
             const string template =
