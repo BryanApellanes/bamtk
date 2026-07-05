@@ -40,12 +40,12 @@ namespace Bam.Tests.Unit
             .TheTest
             .ShouldPass(because =>
             {
-                object[] r = (object[])because.Result;
-                because.ItsTrue("AssemblyPath is parsed", (string)r[0] == "./MyService.dll");
-                because.ItsTrue("ServiceTypeName is parsed", (string)r[1] == "My.Ns.MyService");
-                because.ItsTrue("Mode is parsed as Interface", (GenerationMode)r[2] == GenerationMode.Interface);
-                because.ItsTrue("InterfaceTypeName is parsed", (string)r[3] == "My.Ns.IMyService");
-                because.ItsTrue("OutputDirectory is parsed", (string)r[4] == "./out");
+                because.TheResult
+                    .As<object[]>("AssemblyPath is parsed", r => (string)r[0] == "./MyService.dll")
+                    .As<object[]>("ServiceTypeName is parsed", r => (string)r[1] == "My.Ns.MyService")
+                    .As<object[]>("Mode is parsed as Interface", r => (GenerationMode)r[2] == GenerationMode.Interface)
+                    .As<object[]>("InterfaceTypeName is parsed", r => (string)r[3] == "My.Ns.IMyService")
+                    .As<object[]>("OutputDirectory is parsed", r => (string)r[4] == "./out");
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -77,8 +77,8 @@ namespace Bam.Tests.Unit
             .TheTest
             .ShouldPass(because =>
             {
-                object[] r = (object[])because.Result;
-                because.ItsTrue("throws ArgumentException when AssemblyPath is missing", (bool)r[0]);
+                because.TheResult
+                    .As<object[]>("throws ArgumentException when AssemblyPath is missing", r => (bool)r[0]);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -110,9 +110,9 @@ namespace Bam.Tests.Unit
             .TheTest
             .ShouldPass(because =>
             {
-                object[] r = (object[])because.Result;
-                because.ItsTrue("returns the EchoWebServiceClient.cs path", ((string)r[0]).EndsWith("EchoWebServiceClient.cs"));
-                because.ItsTrue("wrote the client source file to disk", (bool)r[1]);
+                because.TheResult
+                    .As<object[]>("returns the EchoWebServiceClient.cs path", r => ((string)r[0]).EndsWith("EchoWebServiceClient.cs"))
+                    .As<object[]>("wrote the client source file to disk", r => (bool)r[1]);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -145,8 +145,8 @@ namespace Bam.Tests.Unit
             .TheTest
             .ShouldPass(because =>
             {
-                object[] r = (object[])because.Result;
-                because.ItsTrue("throws ServiceClientGenerationException for non-virtual methods", (bool)r[0]);
+                because.TheResult
+                    .As<object[]>("throws ServiceClientGenerationException for non-virtual methods", r => (bool)r[0]);
             })
             .SoBeHappy()
             .UnlessItFailed();
