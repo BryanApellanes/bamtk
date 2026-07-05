@@ -28,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\submodules\bam.base\bam.base\bam.base.csproj" />
     <ProjectReference Include="..\submodules\bam.command\bam.command\bam.command.csproj" />
+    <ProjectReference Include="..\submodules\bam.generators\bam.generators.client\bam.generators.client.csproj" />
   </ItemGroup>
 
   <ItemGroup>
