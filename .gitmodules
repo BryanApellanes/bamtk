@@ -130,3 +130,6 @@
 [submodule "submodules/bamd"]
 	path = submodules/bamd
 	url = git@github.com:BryanApellanes/bamd.git
+[submodule "submodules/bamid"]
+	path = submodules/bamid
+	url = git@github.com:BryanApellanes/bamid.git
