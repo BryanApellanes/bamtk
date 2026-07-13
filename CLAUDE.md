@@ -33,6 +33,7 @@ bamtk/
 │   ├── bam.data*/           #   ORM: repositories, schema, dynamic queries, objects, graph (GraphQL)
 │   ├── bamdb/               #   RDBMS + REST integrations (see rdbms/ and rest/ READMEs)
 │   ├── bam.server/ bamserver/ bam.protocol/ bamsvc/ bamapi/ bam.openapi/   # server + API stack
+│   │     (bamsvc = internal backend app-to-app service layer; bamapi = planned public HTTP WebService host, currently an unimplemented scaffold)
 │   ├── bamux/               #   UX server
 │   ├── bam.maui/ bam.presentation/   # UI (MAUI, presentation)
 │   ├── bamtest/ bam.test/   #   custom test framework + Cobertura coverage
