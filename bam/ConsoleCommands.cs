@@ -4,6 +4,11 @@ using Bam.Services;
 
 namespace Bam
 {
+    /// <summary>
+    /// Working demo of <c>[ConsoleCommand]</c>-only menu dispatch: the menu scanner seeds item types
+    /// from <see cref="ConsoleMenu"/>'s declared item attribute, so no <c>[MenuItem]</c> is required
+    /// (e.g. <c>bam code another</c>).
+    /// </summary>
     [ConsoleMenu("code")]
     public class ConsoleCommands : ConsoleMenuContainer
     {
