@@ -20,12 +20,16 @@ The project is packaged as a NuGet tool (`bam` package, version 2.0.0) and publi
 | `CompositeCommandRunner` | Intended to run brokered commands from composite sources. **Not yet implemented.** |
 | `ConsoleCommands` | A sample `ConsoleMenuContainer` registered under the `"code"` menu, demonstrating `[ConsoleCommand]` usage with string parameters and a default command. |
 | `ToolsProcessCommandContextResolver` | Extends `ProcessCommandContextResolver` to search `.bam/tools` alongside default directories for executable commands. |
+| `GenerateMenuContainer` | The `generate` menu: `service-client` and `decorator` commands, each with an `-init` companion that writes a starter config. |
+| `GenerateServiceClientCommand` / `GenerateDecoratorCommand` | The console-independent actions behind the `generate` commands. Each validates its config, loads the target assembly and drives the matching `bam.generators` generator. |
 
 ## Dependencies
 
 ### Project References
 - `bam.base` -- core framework primitives (`BamProfile`, `ServiceRegistry`, etc.)
 - `bam.command` -- command brokering, parsing, and execution infrastructure (`BamCommandContext`, `CommandBroker`, `ProcessCommandContextResolver`, etc.)
+- `bam.generators.client` -- the service-client generator behind `bam generate service-client`
+- `bam.generators.decorators` -- the decorator generator behind `bam generate decorator`
 
 ### Package References
 None (relies solely on project references).
@@ -36,6 +40,21 @@ None (relies solely on project references).
 ```bash
 dotnet run --project bam/bam.csproj -- <command> [arguments]
 ```
+
+### Generating code
+The `generate` menu holds the code-generation commands. Each reads its input from a `--config` YAML or JSON file, and each has an `-init` companion that writes a starter config to the current directory.
+
+```bash
+bam generate service-client-init    # writes ./BamServiceClientGenerationConfig.yaml
+bam generate ServiceClient --config /full/path/to/BamServiceClientGenerationConfig.yaml
+
+bam generate decorator-init         # writes ./BamDecoratorGenerationConfig.yaml
+bam generate Decorator --config /full/path/to/BamDecoratorGenerationConfig.yaml
+```
+
+Pass `--config` a full path. A relative one is resolved against `~/.bam/data/arguments`, not the current directory.
+
+`Decorator` writes `{ImplementationName}Decorator.cs`: a typed decorator for a service interface plus the extension methods for subscribing handlers to it. See `submodules/bam.generators/bam.generators.decorators/README.md`.
 
 ### Defining a new console command
 ```csharp
