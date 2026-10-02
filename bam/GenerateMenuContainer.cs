@@ -66,5 +66,45 @@ namespace Bam
             File.WriteAllText(BamServiceClientGenerationConfig.DefaultFilePath, template);
             Message.PrintLine("Wrote service-client generation config: {0}", BamServiceClientGenerationConfig.DefaultFilePath);
         }
+
+        /// <summary>
+        /// Generates a strongly-typed decorator, and the extension methods for subscribing to it, for the
+        /// service interface and implementation described by the <c>--config</c> file
+        /// (e.g. <c>bam generate Decorator --config ./decorator.yaml</c>) and writes
+        /// <c>{ImplementationName}Decorator.cs</c> to the configured output directory. On failure (invalid
+        /// config, unresolved type, or a pair that cannot be decorated) the thrown exception propagates to the
+        /// CLI broker, which reports it and exits non-zero.
+        /// </summary>
+        /// <param name="config">The generation config, deserialized from the <c>--config</c> YAML/JSON file by the brokered argument provider.</param>
+        [ConsoleCommand("decorator", "Generate a strongly-typed service decorator from a --config YAML/JSON file")]
+        public void Decorator(BamDecoratorGenerationConfig config)
+        {
+            string outputPath = new GenerateDecoratorCommand().Execute(config);
+            Message.PrintLine("Generated decorator: {0}", outputPath);
+        }
+
+        /// <summary>
+        /// Writes a starter decorator generation config (YAML) to
+        /// <see cref="BamDecoratorGenerationConfig.DefaultFilePath"/> so a user can fill it in and pass it to
+        /// <see cref="Decorator"/>. Mirrors <see cref="ServiceClientInit"/>.
+        /// </summary>
+        [ConsoleCommand("decorator-init", "Write a starter decorator generation config (YAML) to the current directory")]
+        public void DecoratorInit()
+        {
+            File.WriteAllText(BamDecoratorGenerationConfig.DefaultFilePath, DecoratorConfigTemplate);
+            Message.PrintLine("Wrote decorator generation config: {0}", BamDecoratorGenerationConfig.DefaultFilePath);
+        }
+
+        /// <summary>
+        /// The starter config <see cref="DecoratorInit"/> writes. Exposed so a test can prove it deserializes
+        /// into a <see cref="BamDecoratorGenerationConfig"/>.
+        /// </summary>
+        public const string DecoratorConfigTemplate =
+            "# bam generate decorator configuration\n" +
+            "AssemblyPath: ./MyService.dll                     # compiled assembly containing the service interface\n" +
+            "InterfaceTypeName: My.Namespace.IMyService        # fully-qualified service interface\n" +
+            "ImplementationTypeName: My.Namespace.MyService    # fully-qualified type that implements it\n" +
+            "ImplementationAssemblyPath:                       # only when the implementation is in another assembly\n" +
+            "OutputDirectory: ./Generated_Decorators           # where {ImplementationName}Decorator.cs is written\n";
     }
 }
