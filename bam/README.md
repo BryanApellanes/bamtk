@@ -52,7 +52,7 @@ bam generate decorator-init         # writes ./BamDecoratorGenerationConfig.yaml
 bam generate Decorator --config /full/path/to/BamDecoratorGenerationConfig.yaml
 ```
 
-Pass `--config` a full path. A relative one is resolved against `~/.bam/data/arguments`, not the current directory.
+Pass `--config` a full path. A relative one is resolved against `~/.bam/data/arguments`, not the current directory. Paths *inside* the config (`AssemblyPath`, `ImplementationAssemblyPath`, `OutputDirectory`) are different: they resolve against the current directory, not the config file's location. Run the command from the directory the starter's `./` paths assume, or make them absolute. Re-running an `-init` command overwrites the config it wrote.
 
 `Decorator` writes `{ImplementationName}Decorator.cs`: a typed decorator for a service interface plus the extension methods for subscribing handlers to it. See `submodules/bam.generators/bam.generators.decorators/README.md`.
 

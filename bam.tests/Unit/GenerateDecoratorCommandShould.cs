@@ -12,8 +12,18 @@ namespace Bam.Tests.Unit
         {
         }
 
-        private static string TestOutputDir(string name) =>
-            Path.Combine(Path.GetTempPath(), "bam-decorator-tests", name);
+        // A fresh directory per test: whatever a previous run left there is removed first, so leftovers never
+        // build up past one run's worth.
+        private static string TestOutputDir(string name)
+        {
+            string dir = Path.Combine(Path.GetTempPath(), "bam-decorator-tests", name);
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, true);
+            }
+
+            return dir;
+        }
 
         private static BamDecoratorGenerationConfig ValidConfig(string outputDirectory)
         {
@@ -126,20 +136,32 @@ namespace Bam.Tests.Unit
             {
                 reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
             })
-            .When<GenerateDecoratorCommand>("is given a separate implementation assembly", command =>
+            .When<GenerateDecoratorCommand>("is given an interface and an implementation from different assemblies", command =>
             {
-                BamDecoratorGenerationConfig config = ValidConfig(outDir);
-                config.ImplementationAssemblyPath = typeof(GreetingService).Assembly.Location;
+                // ITemplateRenderer lives in bam.base; HandlebarsTemplateRenderer in bam.generators. Only the
+                // implementation assembly path can find the implementation.
+                BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig
+                {
+                    AssemblyPath = typeof(ITemplateRenderer).Assembly.Location,
+                    InterfaceTypeName = typeof(ITemplateRenderer).FullName!,
+                    ImplementationTypeName = typeof(Bam.Generators.HandlebarsTemplateRenderer).FullName!,
+                    OutputDirectory = outDir
+                };
+
+                Exception? withoutPath = Thrown(() => command.Execute(config));
+
+                config.ImplementationAssemblyPath = typeof(Bam.Generators.HandlebarsTemplateRenderer).Assembly.Location;
                 string path = command.Execute(config);
 
                 config.ImplementationAssemblyPath = Path.Combine(outDir, "missing.dll");
-                return new RejectionOutcome(File.Exists(path), Thrown(() => command.Execute(config)));
+                return new TwoAssemblyOutcome(withoutPath, File.Exists(path), Thrown(() => command.Execute(config)));
             })
             .TheTest
-            .ShouldPass<RejectionOutcome>((because, outcome) =>
+            .ShouldPass<TwoAssemblyOutcome>((because, outcome) =>
             {
-                because.ItsTrue("generates from the named implementation assembly", outcome.Succeeded);
-                because.ItsTrue("throws FileNotFoundException when that assembly is missing", outcome.Thrown is FileNotFoundException);
+                because.ItsTrue("without the implementation assembly, the implementation is not found", outcome.WithoutImplementationPath is ArgumentException && outcome.WithoutImplementationPath.Message.Contains("HandlebarsTemplateRenderer"), outcome.WithoutImplementationPath?.Message);
+                because.ItsTrue("with it, the decorator is generated", outcome.Generated);
+                because.ItsTrue("a missing implementation assembly throws FileNotFoundException", outcome.MissingAssembly is FileNotFoundException, outcome.MissingAssembly?.GetType().Name);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -238,7 +260,7 @@ namespace Bam.Tests.Unit
 
         private sealed record GenerationOutcome(string Path, string Source);
 
-        private sealed record RejectionOutcome(bool Succeeded, Exception? Thrown);
+        private sealed record TwoAssemblyOutcome(Exception? WithoutImplementationPath, bool Generated, Exception? MissingAssembly);
 
         private sealed record MissingFieldOutcome(Exception? NoAssembly, Exception? NoInterface, Exception? NoImplementation, Exception? NoOutput, Exception? NullConfig);
 
