@@ -68,19 +68,32 @@ namespace Bam
         }
 
         /// <summary>
-        /// Generates a strongly-typed decorator, and the extension methods for subscribing to it, for the
-        /// service interface and implementation described by the <c>--config</c> file
-        /// (e.g. <c>bam generate Decorator --config ./decorator.yaml</c>) and writes
-        /// <c>{ImplementationName}Decorator.cs</c> to the configured output directory. On failure (invalid
-        /// config, unresolved type, or a pair that cannot be decorated) the thrown exception propagates to the
-        /// CLI broker, which reports it and exits non-zero.
+        /// Generates a strongly-typed decorator, and the extension methods for subscribing to it, for every
+        /// service described by the <c>--config</c> file (e.g. <c>bam generate Decorator --config ./decorator.yaml</c>)
+        /// and writes each <c>{ImplementationName}Decorator.cs</c> to the configured output directory. Every file
+        /// written and every service skipped (with its reason) is printed. An invalid config propagates to the CLI
+        /// broker as a thrown exception, which reports it and exits non-zero; so does a run that writes nothing.
         /// </summary>
         /// <param name="config">The generation config, deserialized from the <c>--config</c> YAML/JSON file by the brokered argument provider.</param>
-        [ConsoleCommand("decorator", "Generate a strongly-typed service decorator from a --config YAML/JSON file")]
+        [ConsoleCommand("decorator", "Generate strongly-typed service decorators from a --config YAML/JSON file")]
         public void Decorator(BamDecoratorGenerationConfig config)
         {
-            string outputPath = new GenerateDecoratorCommand().Execute(config);
-            Message.PrintLine("Generated decorator: {0}", outputPath);
+            DecoratorGenerationReport report = new GenerateDecoratorCommand().Execute(config);
+            foreach (string outputPath in report.Written)
+            {
+                Message.PrintLine("Generated decorator: {0}", outputPath);
+            }
+
+            foreach (SkippedDecorator skipped in report.Skipped)
+            {
+                Message.PrintLine("Skipped {0}", skipped.ToString());
+            }
+
+            if (!report.WroteAnything)
+            {
+                throw new InvalidOperationException(
+                    $"No decorator was generated: {report.Skipped.Count} skipped, each listed above with its reason.");
+            }
         }
 
         /// <summary>
@@ -101,10 +114,22 @@ namespace Bam
         /// </summary>
         public const string DecoratorConfigTemplate =
             "# bam generate decorator configuration\n" +
-            "AssemblyPath: ./MyService.dll                     # compiled assembly containing the service interface\n" +
+            "AssemblyPath: ./MyService.dll                     # compiled assembly containing the service types; the default for every service below\n" +
             "InterfaceTypeName: My.Namespace.IMyService        # fully-qualified service interface\n" +
-            "ImplementationTypeName: My.Namespace.MyService    # fully-qualified type that implements it\n" +
+            "ImplementationTypeName: My.Namespace.MyService    # fully-qualified type that implements it; leave empty to decorate the interface alone\n" +
             "ImplementationAssemblyPath:                       # only when the implementation is in another assembly\n" +
-            "OutputDirectory: ./Generated_Decorators           # where {ImplementationName}Decorator.cs is written\n";
+            "OutputDirectory: ./Generated_Decorators           # where each {ImplementationName}Decorator.cs is written\n" +
+            "RegistryExtensions: true                          # false generates decorators for another container (no ServiceRegistry extension methods)\n" +
+            "TemplateDirectory:                                # directory of Handlebars templates overriding the built-in ones; empty consults ./Templates\n" +
+            "ProbeDirectories: []                              # directories searched for dependencies that are not next to the assemblies; each must exist\n" +
+            "#Services:                                        # more services, one entry each\n" +
+            "#  - Interface: My.Namespace.IOtherService\n" +
+            "#    Implementation: My.Namespace.OtherService    # leave out to decorate the interface alone\n" +
+            "#    AssemblyPath:                                # this entry's assembly, when it is not AssemblyPath\n" +
+            "#    ImplementationAssemblyPath:\n" +
+            "#Discover:                                        # or decorate every public interface in an assembly, paired with its single public implementation; interfaces named above are passed over\n" +
+            "#  AssemblyPath:                                  # defaults to AssemblyPath\n" +
+            "#  Namespace: My.Namespace                        # only interfaces in this namespace and below\n" +
+            "#  InterfaceOnly: false                           # true decorates an interface with no (or several) implementations from the interface alone\n";
     }
 }
