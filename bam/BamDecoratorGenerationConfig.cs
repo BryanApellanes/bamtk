@@ -67,8 +67,9 @@ namespace Bam
         public DecoratorDiscoveryConfig? Discover { get; set; }
 
         /// <summary>
-        /// Directories searched, by file name, for dependencies of the loaded assemblies that the runtime cannot
-        /// find next to them. Optional.
+        /// Directories searched, by file name, for dependencies of the loaded assemblies that are not next to
+        /// them. A dependency beside the assembly that needs it always wins over a same-named file here.
+        /// Optional; each directory named must exist. Relative paths resolve against the current directory.
         /// </summary>
         public List<string> ProbeDirectories { get; set; } = new List<string>();
 

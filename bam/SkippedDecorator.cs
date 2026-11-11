@@ -2,7 +2,8 @@ namespace Bam
 {
     /// <summary>
     /// A service <see cref="GenerateDecoratorCommand"/> did not generate a decorator for, and why. Part of a
-    /// <see cref="DecoratorGenerationReport"/>.
+    /// <see cref="DecoratorGenerationReport"/>. A discovery scan that could not look at an assembly, or found
+    /// nothing in it, is reported the same way, with the assembly in place of the interface.
     /// </summary>
     public class SkippedDecorator
     {
@@ -17,7 +18,10 @@ namespace Bam
             Reason = reason;
         }
 
-        /// <summary>Gets the service interface, as named in the config or as discovered.</summary>
+        /// <summary>
+        /// Gets the service interface, as named in the config or as discovered. For a skip that is about a whole
+        /// discovery scan rather than one service, the assembly scanned.
+        /// </summary>
         public string InterfaceName { get; }
 
         /// <summary>Gets the implementation, or null when the interface was to be decorated alone.</summary>

@@ -92,7 +92,7 @@ namespace Bam
             if (!report.WroteAnything)
             {
                 throw new InvalidOperationException(
-                    "No decorator was generated. " + string.Join(" ", report.Skipped.Select(skipped => skipped.ToString())));
+                    $"No decorator was generated: {report.Skipped.Count} skipped, each listed above with its reason.");
             }
         }
 
@@ -121,8 +121,8 @@ namespace Bam
             "OutputDirectory: ./Generated_Decorators           # where each {ImplementationName}Decorator.cs is written\n" +
             "RegistryExtensions: true                          # false generates decorators for another container (no ServiceRegistry extension methods)\n" +
             "TemplateDirectory:                                # directory of Handlebars templates overriding the built-in ones; empty consults ./Templates\n" +
-            "ProbeDirectories: []                              # directories searched for dependencies the runtime cannot find next to the assemblies\n" +
-            "Services: []                                      # more services, one entry each, for example:\n" +
+            "ProbeDirectories: []                              # directories searched for dependencies that are not next to the assemblies; each must exist\n" +
+            "#Services:                                        # more services, one entry each\n" +
             "#  - Interface: My.Namespace.IOtherService\n" +
             "#    Implementation: My.Namespace.OtherService    # leave out to decorate the interface alone\n" +
             "#    AssemblyPath:                                # this entry's assembly, when it is not AssemblyPath\n" +

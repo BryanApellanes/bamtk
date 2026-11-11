@@ -15,10 +15,11 @@ namespace Bam.Tests.Unit
         }
 
         // A fresh directory per test: whatever a previous run left there is removed first, so leftovers never
-        // build up past one run's worth.
+        // build up past one run's worth. The process id keeps two runs at once (two worktrees, say) out of each
+        // other's directories.
         private static string TestOutputDir(string name)
         {
-            string dir = Path.Combine(Path.GetTempPath(), "bam-decorator-tests", name);
+            string dir = Path.Combine(Path.GetTempPath(), "bam-decorator-tests", Environment.ProcessId.ToString(), name);
             if (Directory.Exists(dir))
             {
                 Directory.Delete(dir, true);
@@ -145,6 +146,43 @@ namespace Bam.Tests.Unit
                 because.ItsTrue("the services list is empty", config.Services is not null && config.Services.Count == 0);
                 because.ItsTrue("discovery is not set (the example is commented out)", config.Discover is null);
                 because.ItsTrue("the single pair is the only service", config.GetServices().Count == 1);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void ReadTheStarterConfigWithItsExamplesUncommented()
+        {
+            string dir = TestOutputDir("starter-uncommented");
+            Directory.CreateDirectory(dir);
+            string yamlPath = Path.Combine(dir, "starter.yaml");
+            // Every commented line after the title is an example the user is invited to uncomment.
+            string[] lines = GenerateMenuContainer.DecoratorConfigTemplate.Split('\n');
+            for (int i = 1; i < lines.Length; i++)
+            {
+                if (lines[i].StartsWith("#", StringComparison.Ordinal))
+                {
+                    lines[i] = lines[i].Substring(1);
+                }
+            }
+
+            File.WriteAllText(yamlPath, string.Join("\n", lines));
+
+            After.Setup(reg =>
+            {
+                reg.For<FileInfo>().Use(new FileInfo(yamlPath));
+            })
+            .When<FileInfo>("reads the starter config with its examples uncommented", file =>
+            {
+                return BamDecoratorGenerationConfig.ReadFrom(file);
+            })
+            .TheTest
+            .ShouldPass<BamDecoratorGenerationConfig>((because, config) =>
+            {
+                because.ItsTrue("the example service is parsed", config.Services.Count == 1 && config.Services[0].Interface == "My.Namespace.IOtherService" && config.Services[0].Implementation == "My.Namespace.OtherService", config.Services.Count.ToString());
+                because.ItsTrue("its blank assembly paths are not set", string.IsNullOrWhiteSpace(config.Services[0].AssemblyPath) && string.IsNullOrWhiteSpace(config.Services[0].ImplementationAssemblyPath));
+                because.ItsTrue("the example discovery is parsed", config.Discover is not null && config.Discover.Namespace == "My.Namespace" && !config.Discover.InterfaceOnly && string.IsNullOrWhiteSpace(config.Discover.AssemblyPath));
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -399,6 +437,170 @@ namespace Bam.Tests.Unit
         }
 
         [UnitTest(RunSynchronously = true)]
+        public void FindAMissingAssemblyBeforeWritingAnything()
+        {
+            string listedDir = TestOutputDir("missing-later-listed");
+            string discoverDir = TestOutputDir("missing-later-discover");
+            string probeDir = TestOutputDir("missing-later-probe");
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is given a good pair followed by something that names a missing path", command =>
+            {
+                BamDecoratorGenerationConfig laterEntry = ListConfig(listedDir,
+                    Pair(typeof(IGreetingService), typeof(GreetingService)),
+                    new DecoratorServiceConfig { Interface = typeof(IFarewellService).FullName!, AssemblyPath = Path.Combine(listedDir, "missing.dll") });
+                Exception? listed = Thrown(() => command.Execute(laterEntry));
+
+                BamDecoratorGenerationConfig discovery = ListConfig(discoverDir, Pair(typeof(IGreetingService), typeof(GreetingService)));
+                discovery.Discover = new DecoratorDiscoveryConfig { AssemblyPath = Path.Combine(discoverDir, "missing.dll") };
+                Exception? discovered = Thrown(() => command.Execute(discovery));
+
+                BamDecoratorGenerationConfig probing = ListConfig(probeDir, Pair(typeof(IGreetingService), typeof(GreetingService)));
+                probing.ProbeDirectories.Add(Path.Combine(probeDir, "no-such-directory"));
+                Exception? probed = Thrown(() => command.Execute(probing));
+
+                return new MissingPathOutcome(listed, discovered, probed, Directory.Exists(listedDir) || Directory.Exists(discoverDir) || Directory.Exists(probeDir));
+            })
+            .TheTest
+            .ShouldPass<MissingPathOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("a later entry's missing assembly throws FileNotFoundException", outcome.LaterEntry is FileNotFoundException, outcome.LaterEntry?.GetType().Name);
+                because.ItsTrue("a missing discovery assembly throws FileNotFoundException", outcome.Discovery is FileNotFoundException, outcome.Discovery?.GetType().Name);
+                because.ItsTrue("a probe directory that does not exist throws DirectoryNotFoundException naming it", outcome.ProbeDirectory is DirectoryNotFoundException && outcome.ProbeDirectory.Message.Contains("no-such-directory"), outcome.ProbeDirectory?.Message);
+                because.ItsTrue("nothing was written before any of them", !outcome.WroteAnything);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void SkipAnAssemblyItCannotLoadAndCarryOn()
+        {
+            string outDir = TestOutputDir("bad-image");
+            string badDir = TestOutputDir("bad-image-src");
+            Directory.CreateDirectory(badDir);
+            string notAnAssembly = Path.Combine(badDir, "NotAnAssembly.dll");
+            File.WriteAllText(notAnAssembly, "this is not an assembly");
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is given a file that is not an assembly between two good pairs", command =>
+            {
+                BamDecoratorGenerationConfig config = ListConfig(outDir,
+                    Pair(typeof(IGreetingService), typeof(GreetingService)),
+                    new DecoratorServiceConfig { Interface = "Some.IService", AssemblyPath = notAnAssembly },
+                    new DecoratorServiceConfig { Interface = typeof(IFarewellService).FullName!, Implementation = typeof(FarewellService).FullName, AssemblyPath = " " });
+                config.Discover = new DecoratorDiscoveryConfig { AssemblyPath = notAnAssembly };
+                return command.Execute(config);
+            })
+            .TheTest
+            .ShouldPass<DecoratorGenerationReport>((because, report) =>
+            {
+                because.ItsTrue("writes the pairs around it (a blank AssemblyPath on an entry falls back to the top-level one)", FileNames(report.Written) == "GreetingServiceDecorator.cs,FarewellServiceDecorator.cs", FileNames(report.Written));
+                because.ItsTrue("skips the entry, saying the assembly could not be loaded", report.Skipped.Count == 2 && report.Skipped[0].InterfaceName == "Some.IService" && report.Skipped[0].Reason.Contains("could not be loaded"), string.Join("; ", report.Skipped));
+                because.ItsTrue("skips the discovery scan of it, naming the file", report.Skipped.Count == 2 && report.Skipped[1].InterfaceName == notAnAssembly && report.Skipped[1].Reason.Contains("was not scanned"), string.Join("; ", report.Skipped));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void LeaveListedInterfacesOutOfDiscovery()
+        {
+            string outDir = TestOutputDir("listed-and-discovered");
+            string interfaceOnlyDir = TestOutputDir("listed-and-discovered-interface-only");
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is given Services entries and a Discover over the same namespace", command =>
+            {
+                BamDecoratorGenerationConfig config = ListConfig(outDir,
+                    Pair(typeof(IAmbiguousService), typeof(AmbiguousServiceA)),
+                    Pair(typeof(IFarewellService), typeof(FarewellService)));
+                config.Discover = new DecoratorDiscoveryConfig { Namespace = typeof(IFarewellService).Namespace };
+                DecoratorGenerationReport paired = command.Execute(config);
+
+                config.OutputDirectory = interfaceOnlyDir;
+                config.Discover.InterfaceOnly = true;
+                DecoratorGenerationReport interfaceOnly = command.Execute(config);
+                return new DiscoveryOutcome(paired, interfaceOnly);
+            })
+            .TheTest
+            .ShouldPass<DiscoveryOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("writes the listed pairs once", FileNames(outcome.Paired.Written) == "AmbiguousServiceADecorator.cs,FarewellServiceDecorator.cs", FileNames(outcome.Paired.Written));
+                because.ItsTrue("discovery reports only the interface nobody listed", outcome.Paired.Skipped.Count == 1 && outcome.Paired.Skipped[0].InterfaceName == typeof(IUnimplementedService).FullName, string.Join("; ", outcome.Paired.Skipped));
+                because.ItsTrue("with InterfaceOnly, discovery adds only the unlisted interface", FileNames(outcome.InterfaceOnly.Written) == "AmbiguousServiceADecorator.cs,FarewellServiceDecorator.cs,IUnimplementedServiceDecorator.cs" && outcome.InterfaceOnly.Skipped.Count == 0, FileNames(outcome.InterfaceOnly.Written) + " " + string.Join("; ", outcome.InterfaceOnly.Skipped));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void SayWhenDiscoveryMatchesNothing()
+        {
+            string outDir = TestOutputDir("discover-nothing");
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("discovers a namespace nothing lives in", command =>
+            {
+                BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig
+                {
+                    AssemblyPath = typeof(IFarewellService).Assembly.Location,
+                    OutputDirectory = outDir,
+                    Discover = new DecoratorDiscoveryConfig { Namespace = "No.Such.Namespace" }
+                };
+                return command.Execute(config);
+            })
+            .TheTest
+            .ShouldPass<DecoratorGenerationReport>((because, report) =>
+            {
+                because.ItsTrue("writes nothing", report.Written.Count == 0);
+                because.ItsTrue("reports the namespace it found nothing in", report.Skipped.Count == 1 && report.Skipped[0].Reason.Contains("No.Such.Namespace") && report.Skipped[0].Reason.Contains("no public interface"), string.Join("; ", report.Skipped));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void FailTheMenuCommandWhenNothingIsWritten()
+        {
+            string outDir = TestOutputDir("menu");
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateMenuContainer>().Use(new GenerateMenuContainer(new ServiceRegistry()));
+            })
+            .When<GenerateMenuContainer>("runs the decorator command", menu =>
+            {
+                BamDecoratorGenerationConfig nothing = ValidConfig(outDir);
+                nothing.InterfaceTypeName = "No.Such.IService";
+                Exception? failed = Thrown(() => menu.Decorator(nothing));
+                Exception? succeeded = Thrown(() => menu.Decorator(ValidConfig(outDir)));
+                return new MenuOutcome(failed, succeeded, File.Exists(Path.Combine(outDir, "GreetingServiceDecorator.cs")));
+            })
+            .TheTest
+            .ShouldPass<MenuOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("throws when every service was skipped", outcome.NothingWritten is InvalidOperationException && outcome.NothingWritten.Message.Contains("No decorator was generated"), outcome.NothingWritten?.Message);
+                because.ItsTrue("the message counts the skips without repeating them", outcome.NothingWritten is not null && outcome.NothingWritten.Message.Contains("1 skipped") && !outcome.NothingWritten.Message.Contains("No.Such.IService"), outcome.NothingWritten?.Message);
+                because.ItsTrue("does not throw when a decorator was written", outcome.Written is null && outcome.FileExists, outcome.Written?.Message);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
         public void DiscoverServicesInAnAssembly()
         {
             string outDir = TestOutputDir("discover");
@@ -426,7 +628,10 @@ namespace Bam.Tests.Unit
             .TheTest
             .ShouldPass<DiscoveryOutcome>((because, outcome) =>
             {
-                because.ItsTrue("pairs an interface with its single public implementation", FileNames(outcome.Paired.Written) == "FarewellServiceDecorator.cs", FileNames(outcome.Paired.Written));
+                // The scanned namespace holds a compiled FarewellServiceDecorator and IUnimplementedServiceDecorator
+                // (DecoratorDiscoveryFixtures.cs), as a project does once it compiles what a first run generated.
+                because.ItsTrue("pairs an interface with its single public implementation, not counting its compiled decorator", FileNames(outcome.Paired.Written) == "FarewellServiceDecorator.cs", FileNames(outcome.Paired.Written) + " " + string.Join("; ", outcome.Paired.Skipped));
+                because.ItsTrue("never decorates a decorator", !outcome.Paired.Written.Concat(outcome.InterfaceOnly.Written).Any(path => path.Contains("DecoratorDecorator")), FileNames(outcome.Paired.Written.Concat(outcome.InterfaceOnly.Written)));
                 because.ItsTrue("skips the interface with two implementations, naming them", outcome.Paired.Skipped.Any(skip => skip.InterfaceName == typeof(IAmbiguousService).FullName && skip.Reason.Contains("2 public implementations") && skip.Reason.Contains(nameof(AmbiguousServiceB))), string.Join("; ", outcome.Paired.Skipped));
                 because.ItsTrue("skips the interface with no public implementation", outcome.Paired.Skipped.Any(skip => skip.InterfaceName == typeof(IUnimplementedService).FullName && skip.Reason.Contains("no public implementation")));
                 because.ItsTrue("nothing else is skipped", outcome.Paired.Skipped.Count == 2);
@@ -507,8 +712,12 @@ namespace Bam.Tests.Unit
             // Two independent service assemblies, each depending on its own dependency assembly that lives in a
             // probe directory, away from the service. The runtime finds a dependency next to the assembly that
             // needs it; these are deliberately elsewhere.
-            CompiledService found = CompileService(root, "Found" + tag);
-            CompiledService lost = CompileService(root, "Lost" + tag);
+            CompiledService found = CompileService(root, "Found" + tag, false);
+            CompiledService lost = CompileService(root, "Lost" + tag, false);
+            // The same again, with the service interface itself deriving from an interface in the dependency: here
+            // the type cannot even be resolved without the dependency.
+            CompiledService foundBase = CompileService(root, "FoundBase" + tag, true);
+            CompiledService lostBase = CompileService(root, "LostBase" + tag, true);
 
             After.Setup(reg =>
             {
@@ -534,7 +743,26 @@ namespace Bam.Tests.Unit
                 };
                 with.ProbeDirectories.Add(found.DependencyDirectory);
                 DecoratorGenerationReport withProbe = command.Execute(with);
-                return new ProbeOutcome(withoutProbe, withProbe, lost.DependencyName);
+
+                BamDecoratorGenerationConfig withoutBase = new BamDecoratorGenerationConfig
+                {
+                    AssemblyPath = lostBase.ServicePath,
+                    InterfaceTypeName = lostBase.InterfaceName,
+                    ImplementationTypeName = lostBase.ImplementationName,
+                    OutputDirectory = Path.Combine(root, "out-base")
+                };
+                DecoratorGenerationReport withoutBaseProbe = command.Execute(withoutBase);
+
+                BamDecoratorGenerationConfig withBase = new BamDecoratorGenerationConfig
+                {
+                    AssemblyPath = foundBase.ServicePath,
+                    InterfaceTypeName = foundBase.InterfaceName,
+                    ImplementationTypeName = foundBase.ImplementationName,
+                    OutputDirectory = Path.Combine(root, "out-base")
+                };
+                withBase.ProbeDirectories.Add(foundBase.DependencyDirectory);
+                DecoratorGenerationReport withBaseProbe = command.Execute(withBase);
+                return new ProbeOutcome(withoutProbe, withProbe, lost.DependencyName, withoutBaseProbe, withBaseProbe, lostBase.DependencyName);
             })
             .TheTest
             .ShouldPass<ProbeOutcome>((because, outcome) =>
@@ -542,6 +770,54 @@ namespace Bam.Tests.Unit
                 because.ItsTrue("without the probe directory the service is skipped", outcome.WithoutProbe.Written.Count == 0 && outcome.WithoutProbe.Skipped.Count == 1, string.Join("; ", outcome.WithoutProbe.Skipped));
                 because.ItsTrue("the reason names the dependency that could not be loaded", outcome.WithoutProbe.Skipped.Count == 1 && outcome.WithoutProbe.Skipped[0].Reason.Contains(outcome.LostDependencyName), outcome.WithoutProbe.Skipped.FirstOrDefault()?.Reason);
                 because.ItsTrue("with the probe directory the decorator is written", FileNames(outcome.WithProbe.Written) == "WidgetDecorator.cs" && outcome.WithProbe.Skipped.Count == 0, FileNames(outcome.WithProbe.Written) + " " + string.Join("; ", outcome.WithProbe.Skipped));
+                because.ItsTrue("an interface whose base is in the missing dependency is skipped", outcome.WithoutBaseProbe.Written.Count == 0 && outcome.WithoutBaseProbe.Skipped.Count == 1, string.Join("; ", outcome.WithoutBaseProbe.Skipped));
+                because.ItsTrue("as a dependency that could not be loaded, named, not as a type that was not found", outcome.WithoutBaseProbe.Skipped.Count == 1 && outcome.WithoutBaseProbe.Skipped[0].Reason.Contains("a dependency could not be loaded") && outcome.WithoutBaseProbe.Skipped[0].Reason.Contains(outcome.LostBaseDependencyName) && !outcome.WithoutBaseProbe.Skipped[0].Reason.Contains("was not found"), outcome.WithoutBaseProbe.Skipped.FirstOrDefault()?.Reason);
+                because.ItsTrue("with the probe directory that decorator is written too", FileNames(outcome.WithBaseProbe.Written) == "WidgetDecorator.cs" && outcome.WithBaseProbe.Skipped.Count == 0, FileNames(outcome.WithBaseProbe.Written) + " " + string.Join("; ", outcome.WithBaseProbe.Skipped));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void PreferTheDependencyBesideTheAssemblyOverAProbeDirectory()
+        {
+            string root = TestOutputDir("probe-order");
+            string outDir = Path.Combine(root, "out");
+            string name = "Beside" + Guid.NewGuid().ToString("N").Substring(0, 8);
+
+            // The service's real dependency, then a copy of it beside the service; in the probe directory, an
+            // assembly of the same name that has no Token type at all (a stale build, or a planted one).
+            CompiledService service = CompileService(root, name, false);
+            string besideService = Path.Combine(Path.GetDirectoryName(service.ServicePath)!, service.DependencyName + ".dll");
+            File.Copy(Path.Combine(service.DependencyDirectory, service.DependencyName + ".dll"), besideService);
+            string shadowDir = Path.Combine(root, name, "shadow");
+            Directory.CreateDirectory(shadowDir);
+            File.WriteAllBytes(Path.Combine(shadowDir, service.DependencyName + ".dll"), new RoslynCompiler().Compile(service.DependencyName,
+                "namespace " + name + ".Dep { public class SomethingElse { } }"));
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is given a probe directory holding another build of a dependency that sits beside the service", command =>
+            {
+                BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig
+                {
+                    AssemblyPath = service.ServicePath,
+                    InterfaceTypeName = service.InterfaceName,
+                    ImplementationTypeName = service.ImplementationName,
+                    OutputDirectory = outDir
+                };
+                config.ProbeDirectories.Add(shadowDir);
+                DecoratorGenerationReport report = command.Execute(config);
+                System.Reflection.Assembly? loaded = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => assembly.GetName().Name == service.DependencyName);
+                return new ProbeOrderOutcome(report, loaded?.Location ?? string.Empty, besideService);
+            })
+            .TheTest
+            .ShouldPass<ProbeOrderOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("the decorator is written from the dependency beside the service", FileNames(outcome.Report.Written) == "WidgetDecorator.cs" && outcome.Report.Skipped.Count == 0, FileNames(outcome.Report.Written) + " " + string.Join("; ", outcome.Report.Skipped));
+                because.ItsTrue("the copy beside the service is the one loaded, not the probe directory's", string.Equals(outcome.LoadedFrom, outcome.BesideService, StringComparison.OrdinalIgnoreCase), outcome.LoadedFrom);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -549,7 +825,8 @@ namespace Bam.Tests.Unit
 
         // Compiles {name}Dep.dll (a Token class) into <root>/<name>/dep and {name}Svc.dll (IWidget + Widget whose
         // method returns a Token) into <root>/<name>/svc, so the service's dependency is not beside it.
-        private static CompiledService CompileService(string root, string name)
+        // With inheritFromDependency, IWidget also derives from an IBase declared in the dependency.
+        private static CompiledService CompileService(string root, string name, bool inheritFromDependency)
         {
             string dependencyName = name + "Dep";
             string serviceName = name + "Svc";
@@ -561,12 +838,12 @@ namespace Bam.Tests.Unit
             RoslynCompiler compiler = new RoslynCompiler();
             string dependencyPath = Path.Combine(dependencyDir, dependencyName + ".dll");
             File.WriteAllBytes(dependencyPath, compiler.Compile(dependencyName,
-                "namespace " + name + ".Dep { public class Token { public string Value { get; set; } = string.Empty; } }"));
+                "namespace " + name + ".Dep { public interface IBase { } public class Token { public string Value { get; set; } = string.Empty; } }"));
 
             string servicePath = Path.Combine(serviceDir, serviceName + ".dll");
             string serviceSource =
                 "namespace " + name + ".Svc {\n" +
-                "  public interface IWidget { global::" + name + ".Dep.Token Make(string value); }\n" +
+                "  public interface IWidget" + (inheritFromDependency ? " : global::" + name + ".Dep.IBase" : string.Empty) + " { global::" + name + ".Dep.Token Make(string value); }\n" +
                 "  public class Widget : IWidget { public global::" + name + ".Dep.Token Make(string value) { return new global::" + name + ".Dep.Token { Value = value }; } }\n" +
                 "}\n";
             File.WriteAllBytes(servicePath, compiler.Compile(serviceName, serviceSource, () =>
@@ -609,7 +886,13 @@ namespace Bam.Tests.Unit
 
         private sealed record TemplateOutcome(string Source, Exception? Missing);
 
-        private sealed record ProbeOutcome(DecoratorGenerationReport WithoutProbe, DecoratorGenerationReport WithProbe, string LostDependencyName);
+        private sealed record ProbeOutcome(DecoratorGenerationReport WithoutProbe, DecoratorGenerationReport WithProbe, string LostDependencyName, DecoratorGenerationReport WithoutBaseProbe, DecoratorGenerationReport WithBaseProbe, string LostBaseDependencyName);
+
+        private sealed record ProbeOrderOutcome(DecoratorGenerationReport Report, string LoadedFrom, string BesideService);
+
+        private sealed record MissingPathOutcome(Exception? LaterEntry, Exception? Discovery, Exception? ProbeDirectory, bool WroteAnything);
+
+        private sealed record MenuOutcome(Exception? NothingWritten, Exception? Written, bool FileExists);
 
         private sealed record CompiledService(string ServicePath, string DependencyDirectory, string DependencyName, string InterfaceName, string ImplementationName);
     }

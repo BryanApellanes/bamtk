@@ -14,12 +14,13 @@ namespace Bam
     /// Deliberately free of any console/CLI dependency so it can be unit-tested directly (see
     /// <c>GenerateDecoratorCommandShould</c>). The menu command (<see cref="GenerateMenuContainer"/>) is a thin
     /// wrapper that delegates here and reports the outcome. Problems with the config as a whole — a missing
-    /// output directory, no services at all, a named assembly or template directory that does not exist —
-    /// surface as thrown exceptions (<see cref="ArgumentException"/>, <see cref="FileNotFoundException"/>,
-    /// <see cref="DirectoryNotFoundException"/>). Problems with one service — a type that cannot be resolved,
-    /// a dependency that cannot be loaded, a pair the generator rejects, a decorator named like one already
-    /// written in the run — are reported in the returned <see cref="DecoratorGenerationReport"/> and the run
-    /// continues with the next service.
+    /// output directory, no services at all, a named assembly, probe directory or template directory that does
+    /// not exist — surface as thrown exceptions (<see cref="ArgumentException"/>,
+    /// <see cref="FileNotFoundException"/>, <see cref="DirectoryNotFoundException"/>) before anything is
+    /// written. Problems with one service — an assembly that is not a loadable assembly, a type that cannot be
+    /// resolved, a dependency that cannot be loaded, a pair the generator rejects, a decorator named like one
+    /// already written in the run — are reported in the returned <see cref="DecoratorGenerationReport"/> and
+    /// the run continues with the next service.
     /// </remarks>
     public class GenerateDecoratorCommand
     {
@@ -34,8 +35,8 @@ namespace Bam
         /// <returns>The files written and the services skipped, with reasons.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="config"/> is null.</exception>
         /// <exception cref="ArgumentException">A required field is missing, or no service is configured.</exception>
-        /// <exception cref="FileNotFoundException">An assembly named by the config does not exist.</exception>
-        /// <exception cref="DirectoryNotFoundException">The configured template directory does not exist.</exception>
+        /// <exception cref="FileNotFoundException">An assembly named anywhere in the config does not exist. Thrown before anything is written.</exception>
+        /// <exception cref="DirectoryNotFoundException">The configured template directory, or a probe directory, does not exist.</exception>
         public DecoratorGenerationReport Execute(BamDecoratorGenerationConfig config)
         {
             ArgumentNullException.ThrowIfNull(config);
@@ -49,15 +50,37 @@ namespace Bam
                     nameof(config.Services));
             }
 
+            // Everything the config names is checked before the first file is written, so a mistyped path in a
+            // later entry never leaves a half-finished run behind with no report of what it wrote.
             for (int i = 0; i < services.Count; i++)
             {
                 RequireValue(services[i].Interface, $"{nameof(config.Services)}[{i}].{nameof(DecoratorServiceConfig.Interface)}");
-                RequireValue(services[i].AssemblyPath ?? config.AssemblyPath, nameof(config.AssemblyPath));
+                string? interfaceAssemblyPath = InterfaceAssemblyPathOf(config, services[i]);
+                RequireValue(interfaceAssemblyPath, nameof(config.AssemblyPath));
+                RequireAssemblyFile(interfaceAssemblyPath!);
+                string? implementationAssemblyPath = ImplementationAssemblyPathOf(config, services[i]);
+                if (implementationAssemblyPath is not null)
+                {
+                    RequireAssemblyFile(implementationAssemblyPath);
+                }
             }
 
             if (config.Discover is not null)
             {
-                RequireValue(config.Discover.AssemblyPath ?? config.AssemblyPath, $"{nameof(config.Discover)}.{nameof(DecoratorDiscoveryConfig.AssemblyPath)}");
+                string? discoveryAssemblyPath = FirstSet(config.Discover.AssemblyPath, config.AssemblyPath);
+                RequireValue(discoveryAssemblyPath, $"{nameof(config.Discover)}.{nameof(DecoratorDiscoveryConfig.AssemblyPath)}");
+                RequireAssemblyFile(discoveryAssemblyPath!);
+            }
+
+            if (config.ProbeDirectories is not null)
+            {
+                foreach (string probeDirectory in config.ProbeDirectories)
+                {
+                    if (!string.IsNullOrWhiteSpace(probeDirectory) && !Directory.Exists(probeDirectory))
+                    {
+                        throw new DirectoryNotFoundException($"{nameof(config.ProbeDirectories)} entry not found: {probeDirectory}");
+                    }
+                }
             }
 
             IDecoratorCodeWriter codeWriter = CreateCodeWriter(config.TemplateDirectory);
@@ -80,30 +103,47 @@ namespace Bam
         private static void GenerateListed(GenerationRun run, AssemblyProbe probe, DecoratorServiceConfig service)
         {
             BamDecoratorGenerationConfig config = run.Config;
-            string interfaceAssemblyPath = service.AssemblyPath ?? config.AssemblyPath;
-            string? implementationAssemblyPath = service.ImplementationAssemblyPath
-                ?? (string.IsNullOrWhiteSpace(service.AssemblyPath) ? config.ImplementationAssemblyPath : null);
+            string interfaceAssemblyPath = InterfaceAssemblyPathOf(config, service)!;
+            string? implementationAssemblyPath = ImplementationAssemblyPathOf(config, service);
             string? implementationName = string.IsNullOrWhiteSpace(service.Implementation) ? null : service.Implementation;
 
-            Assembly interfaceAssembly = probe.Load(interfaceAssemblyPath);
-            Assembly implementationAssembly = string.IsNullOrWhiteSpace(implementationAssemblyPath)
-                ? interfaceAssembly
-                : probe.Load(implementationAssemblyPath);
-
-            Type? interfaceType = Resolve(interfaceAssembly, service.Interface);
-            if (interfaceType is null)
+            Assembly interfaceAssembly;
+            Assembly implementationAssembly;
+            try
             {
-                run.Skip(service.Interface, implementationName, $"interface type '{service.Interface}' was not found in assembly '{interfaceAssembly.Location}'.");
+                interfaceAssembly = probe.Load(interfaceAssemblyPath);
+                implementationAssembly = implementationAssemblyPath is null
+                    ? interfaceAssembly
+                    : probe.Load(implementationAssemblyPath);
+            }
+            catch (Exception ex) when (IsLoadFailure(ex))
+            {
+                // The files exist (checked up front); one of them is not an assembly this runtime can load.
+                run.Skip(service.Interface, implementationName, $"an assembly could not be loaded: {ex.Message}");
                 return;
             }
+
+            Type? interfaceType = Resolve(interfaceAssembly, service.Interface, out string? interfaceLoadFailure);
+            if (interfaceType is null)
+            {
+                run.Skip(service.Interface, implementationName, interfaceLoadFailure is null
+                    ? $"interface type '{service.Interface}' was not found in assembly '{interfaceAssembly.Location}'."
+                    : $"interface type '{service.Interface}' is in assembly '{interfaceAssembly.Location}', but a dependency could not be loaded: {interfaceLoadFailure}");
+                return;
+            }
+
+            // From here the interface belongs to this entry, generated or not: discovery passes over it.
+            run.MarkListed(interfaceType);
 
             Type? implementationType = null;
             if (implementationName is not null)
             {
-                implementationType = Resolve(implementationAssembly, implementationName);
+                implementationType = Resolve(implementationAssembly, implementationName, out string? implementationLoadFailure);
                 if (implementationType is null)
                 {
-                    run.Skip(service.Interface, implementationName, $"implementation type '{implementationName}' was not found in assembly '{implementationAssembly.Location}'.");
+                    run.Skip(service.Interface, implementationName, implementationLoadFailure is null
+                        ? $"implementation type '{implementationName}' was not found in assembly '{implementationAssembly.Location}'."
+                        : $"implementation type '{implementationName}' is in assembly '{implementationAssembly.Location}', but a dependency could not be loaded: {implementationLoadFailure}");
                     return;
                 }
             }
@@ -113,7 +153,18 @@ namespace Bam
 
         private static void Discover(GenerationRun run, AssemblyProbe probe, DecoratorDiscoveryConfig discovery)
         {
-            Assembly assembly = probe.Load(discovery.AssemblyPath ?? run.Config.AssemblyPath);
+            string assemblyPath = FirstSet(discovery.AssemblyPath, run.Config.AssemblyPath)!;
+            Assembly assembly;
+            try
+            {
+                assembly = probe.Load(assemblyPath);
+            }
+            catch (Exception ex) when (IsLoadFailure(ex))
+            {
+                run.Skip(assemblyPath, null, $"the assembly could not be loaded and was not scanned: {ex.Message}");
+                return;
+            }
+
             string assemblyName = assembly.GetName().Name ?? assembly.Location;
 
             Type[] types;
@@ -128,17 +179,35 @@ namespace Bam
                 run.Skip(assemblyName, null, $"some types in the assembly could not be loaded and were not scanned: {detail}");
             }
 
-            IEnumerable<Type> interfaces = types
+            List<Type> interfaces = types
                 .Where(type => type.IsInterface && type.IsVisible && !type.IsGenericTypeDefinition && InNamespace(type, discovery.Namespace))
-                .OrderBy(type => type.FullName, StringComparer.Ordinal);
+                .OrderBy(type => type.FullName, StringComparer.Ordinal)
+                .ToList();
+
+            if (interfaces.Count == 0)
+            {
+                run.Skip(assemblyName, null, string.IsNullOrWhiteSpace(discovery.Namespace)
+                    ? "no public interface was found in the assembly."
+                    : $"no public interface was found in namespace '{discovery.Namespace}' or below it.");
+                return;
+            }
 
             foreach (Type interfaceType in interfaces)
             {
+                // A Services entry (or the single pair) that named this interface has the say over it.
+                if (run.IsListed(interfaceType))
+                {
+                    continue;
+                }
+
                 List<Type> implementations;
                 try
                 {
+                    // A generated decorator implements the interface it decorates and is usually compiled into
+                    // the assembly being scanned; it is never a candidate, or a second run would see two
+                    // implementations where the first saw one.
                     implementations = types
-                        .Where(type => type.IsClass && !type.IsAbstract && type.IsVisible && !type.IsGenericTypeDefinition && interfaceType.IsAssignableFrom(type))
+                        .Where(type => type.IsClass && !type.IsAbstract && type.IsVisible && !type.IsGenericTypeDefinition && interfaceType.IsAssignableFrom(type) && !IsDecorator(type))
                         .OrderBy(type => type.FullName, StringComparer.Ordinal)
                         .ToList();
                 }
@@ -199,9 +268,76 @@ namespace Bam
                 new HandlebarsEmbeddedResources(typeof(HandlebarsDecoratorCodeWriter).Assembly));
         }
 
-        private static Type? Resolve(Assembly assembly, string typeName)
+        // Null with a null loadFailure means the assembly holds no type of that name; null with a loadFailure
+        // means the type is there but something it needs (a base type's assembly, say) could not be loaded.
+        // Assembly.GetType(name) alone returns null for both.
+        private static Type? Resolve(Assembly assembly, string typeName, out string? loadFailure)
         {
-            return assembly.GetType(typeName);
+            loadFailure = null;
+            try
+            {
+                return assembly.GetType(typeName, true);
+            }
+            catch (TypeLoadException ex) when (string.IsNullOrEmpty(ex.TypeName) || ex.TypeName == typeName)
+            {
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+            catch (Exception ex) when (IsLoadFailure(ex))
+            {
+                loadFailure = ex.Message;
+                return null;
+            }
+        }
+
+        // True for a type built on the decorator runtime's Decorator<T> (every generated decorator is). Compared
+        // by name so a target compiled against another build of the runtime is recognised too.
+        private static bool IsDecorator(Type type)
+        {
+            string? decoratorBase = typeof(Decorator<>).FullName;
+            for (Type? current = type.BaseType; current is not null; current = current.BaseType)
+            {
+                if (current.IsGenericType && current.GetGenericTypeDefinition().FullName == decoratorBase)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Blank counts as unset everywhere a path falls back to another.
+        private static string? FirstSet(string? first, string? second)
+        {
+            if (!string.IsNullOrWhiteSpace(first))
+            {
+                return first;
+            }
+
+            return string.IsNullOrWhiteSpace(second) ? null : second;
+        }
+
+        private static string? InterfaceAssemblyPathOf(BamDecoratorGenerationConfig config, DecoratorServiceConfig service)
+        {
+            return FirstSet(service.AssemblyPath, config.AssemblyPath);
+        }
+
+        // An entry with an assembly of its own does not inherit the top-level implementation assembly: that one
+        // goes with the top-level AssemblyPath.
+        private static string? ImplementationAssemblyPathOf(BamDecoratorGenerationConfig config, DecoratorServiceConfig service)
+        {
+            return FirstSet(service.ImplementationAssemblyPath, string.IsNullOrWhiteSpace(service.AssemblyPath) ? config.ImplementationAssemblyPath : null);
+        }
+
+        private static void RequireAssemblyFile(string assemblyPath)
+        {
+            if (!File.Exists(assemblyPath))
+            {
+                throw new FileNotFoundException($"Assembly not found: {assemblyPath}", assemblyPath);
+            }
         }
 
         private static bool IsLoadFailure(Exception ex)
@@ -232,6 +368,7 @@ namespace Bam
             private readonly List<string> _written = new List<string>();
             private readonly List<SkippedDecorator> _skipped = new List<SkippedDecorator>();
             private readonly Dictionary<string, string> _decoratorsByFileName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            private readonly HashSet<Type> _listed = new HashSet<Type>();
             private readonly IDecoratorCodeWriter _codeWriter;
 
             public GenerationRun(BamDecoratorGenerationConfig config, IDecoratorCodeWriter codeWriter)
@@ -245,6 +382,16 @@ namespace Bam
             public void Skip(string interfaceName, string? implementationName, string reason)
             {
                 _skipped.Add(new SkippedDecorator(interfaceName, implementationName, reason));
+            }
+
+            public void MarkListed(Type interfaceType)
+            {
+                _listed.Add(interfaceType);
+            }
+
+            public bool IsListed(Type interfaceType)
+            {
+                return _listed.Contains(interfaceType);
             }
 
             public void Generate(Type interfaceType, Type? implementationType)

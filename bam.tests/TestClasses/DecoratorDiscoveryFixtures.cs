@@ -54,6 +54,36 @@ namespace Bam.Tests.TestClasses.Decorated
     }
 }
 
+// What a project holds once it compiles the decorators a first run generated: classes that implement the
+// service interfaces and derive from the decorator runtime's base. Discovery must not count them as
+// implementations, or a second run over the rebuilt assembly would see two where the first saw one.
+namespace Bam.Tests.TestClasses.Decorated.Decorators
+{
+    /// <summary>Stands in for the generated decorator of <see cref="FarewellService"/>.</summary>
+    public class FarewellServiceDecorator : Bam.Generators.Decorators.Decorator<IFarewellService, FarewellService>, IFarewellService
+    {
+        /// <summary>Initializes a decorator around <paramref name="value"/>.</summary>
+        public FarewellServiceDecorator(FarewellService value) : base(value)
+        {
+        }
+
+        /// <inheritdoc />
+        public string Farewell(string name) => Instance.Farewell(name);
+    }
+
+    /// <summary>Stands in for the generated interface-only decorator of <see cref="IUnimplementedService"/>.</summary>
+    public class IUnimplementedServiceDecorator : Bam.Generators.Decorators.Decorator<IUnimplementedService, IUnimplementedService>, IUnimplementedService
+    {
+        /// <summary>Initializes a decorator around <paramref name="value"/>.</summary>
+        public IUnimplementedServiceDecorator(IUnimplementedService value) : base(value)
+        {
+        }
+
+        /// <inheritdoc />
+        public void Pending(string what) => Instance.Pending(what);
+    }
+}
+
 // Two interfaces of one simple name: their decorators would both be written to IClientDecorator.cs. They sit in
 // namespaces of their own, outside the one the discovery tests scan.
 namespace Bam.Tests.TestClasses.SameFile.Billing
