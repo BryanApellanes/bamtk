@@ -234,8 +234,9 @@ namespace Bam
                 {
                     // The implementation may be among the types that did not load. Falling back to the interface
                     // alone here would change the decorator's type for a reason the config never asked for.
-                    run.Skip(interfaceType.FullName ?? interfaceType.Name, null,
-                        $"{implementations.Count} public implementations were found, but some types in '{assemblyName}' could not be loaded, so its implementation may be among them; fix the load failure, or list the service under Services.");
+                    run.Skip(interfaceType.FullName ?? interfaceType.Name, null, implementations.Count == 0
+                        ? $"no public implementation was found, but some types in '{assemblyName}' could not be loaded, so its implementation may be among them; fix the load failure, or list the service under Services."
+                        : $"{implementations.Count} public implementations were found and some types in '{assemblyName}' could not be loaded, so there may be more; fix the load failure, or list the pair you want under Services.");
                 }
                 else if (discovery.InterfaceOnly)
                 {
@@ -311,10 +312,14 @@ namespace Bam
             }
         }
 
-        // Whether the assembly file's type-definition table holds a type of that full name (nested types
-        // spelled Outer+Inner, as Assembly.GetType takes them). Reads metadata only; loads nothing.
+        // Whether the assembly file's type-definition table holds the type the name refers to (nested types
+        // spelled Outer+Inner, as Assembly.GetType takes them). A closed generic name is matched on its
+        // definition, the part before the first '[': the table holds IRepo`1, never IRepo`1[[System.String, ...]].
+        // Reads metadata only; loads nothing.
         private static bool DefinesType(Assembly assembly, string typeName)
         {
+            int argumentsStart = typeName.IndexOf('[');
+            string definitionName = (argumentsStart < 0 ? typeName : typeName.Substring(0, argumentsStart)).Trim();
             try
             {
                 using FileStream stream = new FileStream(assembly.Location, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -322,7 +327,11 @@ namespace Bam
                 MetadataReader reader = peReader.GetMetadataReader();
                 foreach (TypeDefinitionHandle handle in reader.TypeDefinitions)
                 {
-                    if (FullNameOf(reader, reader.GetTypeDefinition(handle)) == typeName)
+                    TypeDefinition definition = reader.GetTypeDefinition(handle);
+                    // The row's own name is the tail of its full name: only a row that could match pays for
+                    // the walk up its declaring types.
+                    if (definitionName.EndsWith(reader.GetString(definition.Name), StringComparison.Ordinal)
+                        && FullNameOf(reader, definition) == definitionName)
                     {
                         return true;
                     }
@@ -337,16 +346,26 @@ namespace Bam
             }
         }
 
+        // Namespace.Outer+Inner for a type-definition row. The walk up the declaring types is a loop bounded
+        // by the number of rows, so it ends whatever the nesting table says (the runtime refuses to load an
+        // assembly whose nesting is cyclic, but this reads the file, not the loaded assembly).
         private static string FullNameOf(MetadataReader reader, TypeDefinition definition)
         {
             string name = reader.GetString(definition.Name);
-            TypeDefinitionHandle declaring = definition.GetDeclaringType();
-            if (!declaring.IsNil)
+            TypeDefinition current = definition;
+            for (int steps = reader.TypeDefinitions.Count; steps > 0; steps--)
             {
-                return FullNameOf(reader, reader.GetTypeDefinition(declaring)) + "+" + name;
+                TypeDefinitionHandle declaring = current.GetDeclaringType();
+                if (declaring.IsNil)
+                {
+                    break;
+                }
+
+                current = reader.GetTypeDefinition(declaring);
+                name = reader.GetString(current.Name) + "+" + name;
             }
 
-            string @namespace = reader.GetString(definition.Namespace);
+            string @namespace = reader.GetString(current.Namespace);
             return @namespace.Length == 0 ? name : @namespace + "." + name;
         }
 

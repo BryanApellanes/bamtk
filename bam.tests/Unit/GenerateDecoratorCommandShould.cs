@@ -952,6 +952,8 @@ namespace Bam.Tests.Unit
                 "  public class Widget : IWidget, global::" + dependencyName + ".IBase { public int Make() { return 1; } }\n" +
                 "  public interface IOrphan { int Wait(); }\n" +
                 "  public class Orphan : IOrphan, global::" + dependencyName + ".IBase { public int Wait() { return 1; } }\n" +
+                "  public interface IGen<T> { T Get(); }\n" +
+                "  public class BadGen<T> : IGen<T>, global::" + dependencyName + ".IBase { public T Get() { return default(T)!; } }\n" +
                 "}\n",
                 () => compiler.MetadataReferenceResolver.GetMetaDataReferences()
                     .Concat(new MetadataReference[] { MetadataReference.CreateFromFile(oldDependency) })
@@ -973,6 +975,11 @@ namespace Bam.Tests.Unit
                     OutputDirectory = Path.Combine(root, "out-listed")
                 };
                 listed.Services.Add(new DecoratorServiceConfig { Interface = serviceName + ".IWidget", Implementation = serviceName + ".NoSuchWidget" });
+                // The same two cases with the type named as a closed generic, which is never the spelling the
+                // assembly's own type table holds.
+                const string OfString = "[[System.String, System.Private.CoreLib]]";
+                listed.Services.Add(new DecoratorServiceConfig { Interface = serviceName + ".IGen`1" + OfString, Implementation = serviceName + ".BadGen`1" + OfString });
+                listed.Services.Add(new DecoratorServiceConfig { Interface = serviceName + ".IGen`2" + OfString });
                 DecoratorGenerationReport listedReport = command.Execute(listed);
 
                 BamDecoratorGenerationConfig discovered = new BamDecoratorGenerationConfig
@@ -988,9 +995,11 @@ namespace Bam.Tests.Unit
             {
                 DecoratorGenerationReport listed = outcome.Paired;
                 DecoratorGenerationReport discovered = outcome.InterfaceOnly;
-                because.ItsTrue("the listed pair is skipped and so is the one naming a type that is not there", listed.Written.Count == 0 && listed.Skipped.Count == 2, string.Join("; ", listed.Skipped));
-                because.ItsTrue("the unloadable implementation is reported with the loader's reason, not as not found", listed.Skipped.Count == 2 && listed.Skipped[0].Reason.Contains("could not be loaded") && listed.Skipped[0].Reason.Contains("Added") && !listed.Skipped[0].Reason.Contains("was not found"), listed.Skipped.FirstOrDefault()?.Reason);
-                because.ItsTrue("a name the assembly really lacks is still not found", listed.Skipped.Count == 2 && listed.Skipped[1].Reason.Contains("NoSuchWidget") && listed.Skipped[1].Reason.Contains("was not found"), listed.Skipped.LastOrDefault()?.Reason);
+                because.ItsTrue("every listed entry is skipped", listed.Written.Count == 0 && listed.Skipped.Count == 4, FileNames(listed.Written) + " " + string.Join("; ", listed.Skipped));
+                because.ItsTrue("the unloadable implementation is reported with the loader's reason, not as not found", listed.Skipped.Count == 4 && listed.Skipped[0].Reason.Contains("could not be loaded") && listed.Skipped[0].Reason.Contains("Added") && !listed.Skipped[0].Reason.Contains("was not found"), listed.Skipped.FirstOrDefault()?.Reason);
+                because.ItsTrue("a name the assembly really lacks is still not found", listed.Skipped.Count == 4 && listed.Skipped[1].Reason.Contains("NoSuchWidget") && listed.Skipped[1].Reason.Contains("was not found"), listed.Skipped.Count == 4 ? listed.Skipped[1].Reason : "count");
+                because.ItsTrue("an unloadable implementation named as a closed generic gets the loader's reason too", listed.Skipped.Count == 4 && listed.Skipped[2].Reason.Contains("BadGen") && listed.Skipped[2].Reason.Contains("could not be loaded") && !listed.Skipped[2].Reason.Contains("was not found"), listed.Skipped.Count == 4 ? listed.Skipped[2].Reason : "count");
+                because.ItsTrue("a closed generic over a definition the assembly lacks is still not found", listed.Skipped.Count == 4 && listed.Skipped[3].Reason.Contains("IGen`2") && listed.Skipped[3].Reason.Contains("was not found"), listed.Skipped.Count == 4 ? listed.Skipped[3].Reason : "count");
                 because.ItsTrue("discovery reports the types it could not scan", discovered.Skipped.Any(skip => skip.Reason.Contains("were not scanned")), string.Join("; ", discovered.Skipped));
                 because.ItsTrue("and with InterfaceOnly does not fall back to the interface alone for a service whose implementation may be among them", discovered.Written.Count == 0 && discovered.Skipped.Any(skip => skip.InterfaceName == discovered.Skipped[discovered.Skipped.Count - 1].InterfaceName && skip.Reason.Contains("could not be loaded, so its implementation may be among them")), FileNames(discovered.Written) + " " + string.Join("; ", discovered.Skipped));
             })
