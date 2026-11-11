@@ -223,14 +223,15 @@ namespace Bam
 
         /// <summary>
         /// The state of one <see cref="Execute"/> call: the files written so far, the services skipped so far,
-        /// and the decorator names already taken, so a later service that would write the same file is skipped
-        /// instead of overwriting it.
+        /// and the output file names already taken, so a later service that would write the same file is skipped
+        /// instead of overwriting it. Files are named after the decorator type alone and land in one directory,
+        /// so two services named alike in different namespaces take the same file.
         /// </summary>
         private sealed class GenerationRun
         {
             private readonly List<string> _written = new List<string>();
             private readonly List<SkippedDecorator> _skipped = new List<SkippedDecorator>();
-            private readonly HashSet<string> _decoratorNames = new HashSet<string>(StringComparer.Ordinal);
+            private readonly Dictionary<string, string> _decoratorsByFileName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             private readonly IDecoratorCodeWriter _codeWriter;
 
             public GenerationRun(BamDecoratorGenerationConfig config, IDecoratorCodeWriter codeWriter)
@@ -251,11 +252,16 @@ namespace Bam
                 string interfaceName = interfaceType.FullName ?? interfaceType.Name;
                 string? implementationName = implementationType?.FullName ?? implementationType?.Name;
                 string decoratorName = GeneratedDecorators.FullNameOf(implementationType ?? interfaceType);
-                if (!_decoratorNames.Add(decoratorName))
+                string fileName = GeneratedDecorators.TypeNameOf(implementationType ?? interfaceType) + ".cs";
+                if (_decoratorsByFileName.TryGetValue(fileName, out string? written))
                 {
-                    Skip(interfaceName, implementationName, $"would generate {decoratorName}, which this run already wrote; the two files would overwrite each other.");
+                    Skip(interfaceName, implementationName, written == decoratorName
+                        ? $"would generate {decoratorName}, which this run already wrote; the two files would overwrite each other."
+                        : $"would write {decoratorName} to {fileName}, the file this run already wrote {written} to; the second would overwrite the first. Generate it in a run with its own {nameof(BamDecoratorGenerationConfig.OutputDirectory)}.");
                     return;
                 }
+
+                _decoratorsByFileName.Add(fileName, decoratorName);
 
                 try
                 {
@@ -265,16 +271,27 @@ namespace Bam
                         generator.WithoutRegistryExtensions();
                     }
 
-                    _written.AddRange(generator.AddServiceType(interfaceType, implementationType).WriteSource(Config.OutputDirectory));
+                    // A null implementation is only ever a request for the interface alone: a named
+                    // implementation that was not found is skipped before it gets here.
+                    if (implementationType is null)
+                    {
+                        generator.AddInterface(interfaceType);
+                    }
+                    else
+                    {
+                        generator.AddServiceType(interfaceType, implementationType);
+                    }
+
+                    _written.AddRange(generator.WriteSource(Config.OutputDirectory));
                 }
                 catch (DecoratorGenerationException ex)
                 {
-                    _decoratorNames.Remove(decoratorName);
+                    _decoratorsByFileName.Remove(fileName);
                     Skip(interfaceName, implementationName, ex.Message);
                 }
                 catch (Exception ex) when (IsLoadFailure(ex))
                 {
-                    _decoratorNames.Remove(decoratorName);
+                    _decoratorsByFileName.Remove(fileName);
                     Skip(interfaceName, implementationName, $"a dependency could not be loaded: {ex.Message}");
                 }
             }

@@ -53,3 +53,23 @@ namespace Bam.Tests.TestClasses.Decorated
         }
     }
 }
+
+// Two interfaces of one simple name: their decorators would both be written to IClientDecorator.cs. They sit in
+// namespaces of their own, outside the one the discovery tests scan.
+namespace Bam.Tests.TestClasses.SameFile.Billing
+{
+    /// <summary>Shares its simple name with <see cref="Shipping.IClient"/>.</summary>
+    public interface IClient
+    {
+        int Bill();
+    }
+}
+
+namespace Bam.Tests.TestClasses.SameFile.Shipping
+{
+    /// <summary>Shares its simple name with <see cref="Billing.IClient"/>.</summary>
+    public interface IClient
+    {
+        int Ship();
+    }
+}

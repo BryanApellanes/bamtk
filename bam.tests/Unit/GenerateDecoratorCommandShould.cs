@@ -368,6 +368,37 @@ namespace Bam.Tests.Unit
         }
 
         [UnitTest(RunSynchronously = true)]
+        public void SkipAServiceThatWouldOverwriteAnotherNamespacesFile()
+        {
+            string outDir = TestOutputDir("samefile");
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is given two same-named interfaces from different namespaces", command =>
+            {
+                BamDecoratorGenerationConfig config = ListConfig(outDir,
+                    Pair(typeof(Bam.Tests.TestClasses.SameFile.Billing.IClient), null),
+                    Pair(typeof(Bam.Tests.TestClasses.SameFile.Shipping.IClient), null));
+                DecoratorGenerationReport report = command.Execute(config);
+                string source = report.Written.Count == 1 ? File.ReadAllText(report.Written[0]) : string.Empty;
+                return new GenerationOutcome(report, Directory.GetFiles(outDir).Length.ToString(), source);
+            })
+            .TheTest
+            .ShouldPass<GenerationOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("writes the first", FileNames(outcome.Report.Written) == "IClientDecorator.cs", FileNames(outcome.Report.Written));
+                because.ItsTrue("skips the second", outcome.Report.Skipped.Count == 1 && outcome.Report.Skipped[0].InterfaceName == typeof(Bam.Tests.TestClasses.SameFile.Shipping.IClient).FullName, string.Join("; ", outcome.Report.Skipped));
+                because.ItsTrue("the reason names the file and the decorator already in it", outcome.Report.Skipped.Count == 1 && outcome.Report.Skipped[0].Reason.Contains("IClientDecorator.cs") && outcome.Report.Skipped[0].Reason.Contains("Billing") && outcome.Report.Skipped[0].Reason.Contains("overwrite"), outcome.Report.Skipped.Count == 1 ? outcome.Report.Skipped[0].Reason : "no skip");
+                because.ItsTrue("one file is on disk", outcome.Path == "1", outcome.Path);
+                because.ItsTrue("and it still holds the first decorator", outcome.Source.Contains("SameFile.Billing.IClient") && !outcome.Source.Contains("SameFile.Shipping.IClient"));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
         public void DiscoverServicesInAnAssembly()
         {
             string outDir = TestOutputDir("discover");
