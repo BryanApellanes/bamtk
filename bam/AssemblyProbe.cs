@@ -1,23 +1,30 @@
 using System.Reflection;
-using System.Runtime.Loader;
 
 namespace Bam
 {
     /// <summary>
     /// Loads assemblies for reflection-driven generation and resolves their dependencies for as long as the
-    /// probe lives. A dependency is looked for, by file name, first in the directories of the assemblies this
-    /// probe loaded and only then in the configured probe directories, so a probe directory is a fallback for
-    /// a dependency that lives somewhere else (a sibling project's output, a package cache) and never shadows
-    /// the copy sitting next to the assembly that needs it.
+    /// probe lives. A dependency is looked for, by file name, in this order: beside the assembly that asks for
+    /// it, in the directories of the other assemblies this probe loaded (in load order), and only then in the
+    /// configured probe directories. A probe directory is therefore a fallback for a dependency that lives
+    /// somewhere else (a sibling project's output, a package cache), and neither it nor another loaded
+    /// assembly's directory shadows the copy sitting next to the assembly that needs it.
     /// </summary>
     /// <remarks>
-    /// Hooks <see cref="AssemblyLoadContext.Resolving"/> on the default load context, which the runtime raises
-    /// only after its own probing fails, and unhooks it on <see cref="Dispose"/>. That event is raised before
-    /// <see cref="Assembly.LoadFrom(string)"/>'s own look beside the requesting assembly, which is why this
-    /// type searches the loaded assemblies' directories itself, ahead of the configured ones. Assemblies are
-    /// loaded into the default context (as <see cref="Assembly.LoadFrom(string)"/> does) because decorator
-    /// generation reflects over runtime <see cref="Type"/>s; a metadata-only context would not do. A dependency
-    /// is matched on its simple name alone: version, culture and key token are not compared.
+    /// <para>
+    /// Hooks <see cref="AppDomain.AssemblyResolve"/>, which the runtime raises only after its own probing
+    /// fails and which, unlike <c>AssemblyLoadContext.Resolving</c>, says which assembly is asking; unhooks it
+    /// on <see cref="Dispose"/>. Assemblies are loaded into the default load context with
+    /// <see cref="Assembly.LoadFrom(string)"/> because decorator generation reflects over runtime
+    /// <see cref="Type"/>s; a metadata-only context would not do.
+    /// </para>
+    /// <para>
+    /// Two limits follow from loading into one context. A dependency is matched on its simple name alone:
+    /// version, culture and key token are not compared. And the process holds one assembly per simple name, so
+    /// when two loaded assemblies each have their own build of a same-named dependency beside them, the build
+    /// that is asked for first is the one both get for the rest of the process. Generate such services in
+    /// separate runs.
+    /// </para>
     /// </remarks>
     public sealed class AssemblyProbe : IDisposable
     {
@@ -25,24 +32,12 @@ namespace Bam
 
         private readonly List<string> _loadedDirectories = new List<string>();
         private readonly List<string> _probeDirectories = new List<string>();
-        private readonly AssemblyLoadContext _context;
         private bool _disposed;
 
-        /// <summary>Initializes a probe over the default load context.</summary>
+        /// <summary>Initializes a probe and starts answering failed assembly resolutions.</summary>
         /// <param name="directories">The fallback directories to search for dependencies; null or empty for none to start with.</param>
         public AssemblyProbe(IEnumerable<string>? directories)
-            : this(AssemblyLoadContext.Default, directories)
         {
-        }
-
-        /// <summary>Initializes a probe over the specified load context.</summary>
-        /// <param name="context">The load context whose failed resolutions this probe answers.</param>
-        /// <param name="directories">The fallback directories to search for dependencies; null or empty for none to start with.</param>
-        public AssemblyProbe(AssemblyLoadContext context, IEnumerable<string>? directories)
-        {
-            ArgumentNullException.ThrowIfNull(context);
-
-            _context = context;
             if (directories is not null)
             {
                 foreach (string directory in directories)
@@ -51,12 +46,12 @@ namespace Bam
                 }
             }
 
-            _context.Resolving += Resolve;
+            AppDomain.CurrentDomain.AssemblyResolve += Resolve;
         }
 
         /// <summary>
-        /// Gets the directories searched, as full paths, in search order: the directories of the assemblies
-        /// this probe loaded, then the configured fallback directories.
+        /// Gets the directories searched after the requesting assembly's own, as full paths, in search order:
+        /// the directories of the assemblies this probe loaded, then the configured fallback directories.
         /// </summary>
         public IReadOnlyList<string> Directories => _loadedDirectories.Concat(_probeDirectories).ToList();
 
@@ -71,12 +66,13 @@ namespace Bam
         }
 
         /// <summary>
-        /// Loads the assembly at <paramref name="assemblyPath"/> into the load context and adds its directory
-        /// to the directories searched ahead of the fallback ones.
+        /// Loads the assembly at <paramref name="assemblyPath"/> and, once it has loaded, adds its directory to
+        /// the directories searched ahead of the fallback ones.
         /// </summary>
         /// <param name="assemblyPath">Path to the assembly file.</param>
         /// <returns>The loaded assembly.</returns>
         /// <exception cref="FileNotFoundException">The file does not exist.</exception>
+        /// <exception cref="BadImageFormatException">The file is not an assembly this runtime can load.</exception>
         public Assembly Load(string assemblyPath)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(assemblyPath);
@@ -87,13 +83,12 @@ namespace Bam
                 throw new FileNotFoundException($"Assembly not found: {assemblyPath}", assemblyPath);
             }
 
+            Assembly assembly = Assembly.LoadFrom(assemblyFile.FullName);
             Add(_loadedDirectories, assemblyFile.DirectoryName);
-            return _context == AssemblyLoadContext.Default
-                ? Assembly.LoadFrom(assemblyFile.FullName)
-                : _context.LoadFromAssemblyPath(assemblyFile.FullName);
+            return assembly;
         }
 
-        /// <summary>Stops answering the load context's resolution requests.</summary>
+        /// <summary>Stops answering failed assembly resolutions.</summary>
         public void Dispose()
         {
             if (_disposed)
@@ -102,7 +97,7 @@ namespace Bam
             }
 
             _disposed = true;
-            _context.Resolving -= Resolve;
+            AppDomain.CurrentDomain.AssemblyResolve -= Resolve;
         }
 
         private static void Add(List<string> directories, string? directory)
@@ -119,22 +114,36 @@ namespace Bam
             }
         }
 
-        private Assembly? Resolve(AssemblyLoadContext context, AssemblyName assemblyName)
+        private Assembly? Resolve(object? sender, ResolveEventArgs args)
         {
-            if (string.IsNullOrEmpty(assemblyName.Name))
+            string? simpleName = new AssemblyName(args.Name).Name;
+            if (string.IsNullOrEmpty(simpleName))
             {
                 return null;
             }
 
-            // Beside the loaded assemblies first: a probe directory only answers for what is not there.
+            // Beside the assembly that asks first, so each loaded assembly gets the copy next to it; then the
+            // other loaded assemblies' directories; a probe directory only answers for what is in none of them.
+            List<string> searched = new List<string>();
+            string? requestingLocation = args.RequestingAssembly?.Location;
+            if (!string.IsNullOrEmpty(requestingLocation))
+            {
+                Add(searched, Path.GetDirectoryName(requestingLocation));
+            }
+
             foreach (string directory in _loadedDirectories.Concat(_probeDirectories))
+            {
+                Add(searched, directory);
+            }
+
+            foreach (string directory in searched)
             {
                 foreach (string extension in Extensions)
                 {
-                    string candidate = Path.Combine(directory, assemblyName.Name + extension);
+                    string candidate = Path.Combine(directory, simpleName + extension);
                     if (File.Exists(candidate))
                     {
-                        return context.LoadFromAssemblyPath(candidate);
+                        return Assembly.LoadFrom(candidate);
                     }
                 }
             }

@@ -14,18 +14,66 @@ namespace Bam.Tests.Unit
         {
         }
 
-        // A fresh directory per test: whatever a previous run left there is removed first, so leftovers never
-        // build up past one run's worth. The process id keeps two runs at once (two worktrees, say) out of each
-        // other's directories.
+        private static bool _sweptEarlierRuns;
+
+        // A fresh directory per test, under a root named for this process so two runs at once (two worktrees,
+        // say) stay out of each other's directories. The first call removes the roots of processes that are
+        // gone, so leftovers never build up past the runs still going.
         private static string TestOutputDir(string name)
         {
-            string dir = Path.Combine(Path.GetTempPath(), "bam-decorator-tests", Environment.ProcessId.ToString(), name);
+            string root = Path.Combine(Path.GetTempPath(), "bam-decorator-tests");
+            if (!_sweptEarlierRuns)
+            {
+                _sweptEarlierRuns = true;
+                SweepEarlierRuns(root);
+            }
+
+            string dir = Path.Combine(root, Environment.ProcessId.ToString(), name);
             if (Directory.Exists(dir))
             {
                 Directory.Delete(dir, true);
             }
 
             return dir;
+        }
+
+        private static void SweepEarlierRuns(string root)
+        {
+            if (!Directory.Exists(root))
+            {
+                return;
+            }
+
+            foreach (string runDirectory in Directory.GetDirectories(root))
+            {
+                bool running = int.TryParse(Path.GetFileName(runDirectory), out int processId) && IsRunning(processId);
+                if (running)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    Directory.Delete(runDirectory, true);
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    // Something still holds a file there; the next run tries again.
+                }
+            }
+        }
+
+        private static bool IsRunning(int processId)
+        {
+            try
+            {
+                using System.Diagnostics.Process process = System.Diagnostics.Process.GetProcessById(processId);
+                return !process.HasExited;
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException)
+            {
+                return false;
+            }
         }
 
         private static BamDecoratorGenerationConfig ValidConfig(string outputDirectory)
@@ -278,6 +326,7 @@ namespace Bam.Tests.Unit
                 BamDecoratorGenerationConfig listedWithoutInterface = ListConfig(outDir, new DecoratorServiceConfig { Interface = string.Empty, Implementation = typeof(GreetingService).FullName });
                 BamDecoratorGenerationConfig listedWithoutAssembly = ListConfig(outDir, Pair(typeof(IGreetingService), typeof(GreetingService)));
                 listedWithoutAssembly.AssemblyPath = null!;
+                BamDecoratorGenerationConfig emptyEntry = ListConfig(outDir, Pair(typeof(IGreetingService), typeof(GreetingService)), null!);
 
                 return new MissingFieldOutcome(
                     Thrown(() => command.Execute(noAssembly)),
@@ -286,7 +335,8 @@ namespace Bam.Tests.Unit
                     Thrown(() => command.Execute(noOutput)),
                     Thrown(() => command.Execute(null!)),
                     Thrown(() => command.Execute(listedWithoutInterface)),
-                    Thrown(() => command.Execute(listedWithoutAssembly)));
+                    Thrown(() => command.Execute(listedWithoutAssembly)),
+                    Thrown(() => command.Execute(emptyEntry)));
             })
             .TheTest
             .ShouldPass<MissingFieldOutcome>((because, outcome) =>
@@ -298,6 +348,7 @@ namespace Bam.Tests.Unit
                 because.ItsTrue("throws ArgumentNullException for a null config", outcome.NullConfig is ArgumentNullException);
                 because.ItsTrue("throws ArgumentException naming the entry when a listed service has no interface", outcome.ListedWithoutInterface is ArgumentException && outcome.ListedWithoutInterface.Message.Contains("Services[0].Interface"), outcome.ListedWithoutInterface?.Message);
                 because.ItsTrue("throws ArgumentException when a listed service has no assembly anywhere", outcome.ListedWithoutAssembly is ArgumentException && outcome.ListedWithoutAssembly.Message.Contains("AssemblyPath"), outcome.ListedWithoutAssembly?.Message);
+                because.ItsTrue("throws ArgumentException naming the entry when a Services entry is empty", outcome.EmptyEntry is ArgumentException && outcome.EmptyEntry.Message.Contains("Services[1]"), outcome.EmptyEntry?.GetType().Name + " " + outcome.EmptyEntry?.Message);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -823,6 +874,130 @@ namespace Bam.Tests.Unit
             .UnlessItFailed();
         }
 
+        [UnitTest(RunSynchronously = true)]
+        public void GiveEachServiceTheDependencyBesideIt()
+        {
+            string root = TestOutputDir("probe-two-services");
+            string outDir = Path.Combine(root, "out");
+            string tag = Guid.NewGuid().ToString("N").Substring(0, 8);
+            string sharedName = "Shared" + tag;
+            string dirOne = Path.Combine(root, "one");
+            string dirTwo = Path.Combine(root, "two");
+            Directory.CreateDirectory(dirOne);
+            Directory.CreateDirectory(dirTwo);
+
+            // One.dll does not use the shared library, but a stale build of it (no Token) sits in its directory.
+            // Two.dll uses it, and the right build sits beside Two.dll.
+            RoslynCompiler compiler = new RoslynCompiler();
+            File.WriteAllBytes(Path.Combine(dirOne, sharedName + ".dll"), compiler.Compile(sharedName,
+                "namespace " + sharedName + " { public class Stale { } }"));
+            string sharedPath = Path.Combine(dirTwo, sharedName + ".dll");
+            File.WriteAllBytes(sharedPath, compiler.Compile(sharedName,
+                "namespace " + sharedName + " { public class Token { } }"));
+            string onePath = Path.Combine(dirOne, "One" + tag + ".dll");
+            File.WriteAllBytes(onePath, compiler.Compile("One" + tag,
+                "namespace One" + tag + " { public interface IFirst { int Go(); } public class First : IFirst { public int Go() { return 1; } } }"));
+            string twoPath = Path.Combine(dirTwo, "Two" + tag + ".dll");
+            File.WriteAllBytes(twoPath, compiler.Compile("Two" + tag,
+                "namespace Two" + tag + " { public interface ISecond { global::" + sharedName + ".Token Go(); } public class Second : ISecond { public global::" + sharedName + ".Token Go() { return new global::" + sharedName + ".Token(); } } }",
+                () => compiler.MetadataReferenceResolver.GetMetaDataReferences()
+                    .Concat(new MetadataReference[] { MetadataReference.CreateFromFile(sharedPath) })
+                    .ToArray()));
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is given two services from two directories, a stale copy of the second's dependency beside the first", command =>
+            {
+                BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig { OutputDirectory = outDir };
+                config.Services.Add(new DecoratorServiceConfig { Interface = "One" + tag + ".IFirst", Implementation = "One" + tag + ".First", AssemblyPath = onePath });
+                config.Services.Add(new DecoratorServiceConfig { Interface = "Two" + tag + ".ISecond", Implementation = "Two" + tag + ".Second", AssemblyPath = twoPath });
+                DecoratorGenerationReport report = command.Execute(config);
+                System.Reflection.Assembly? loaded = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => assembly.GetName().Name == sharedName);
+                return new ProbeOrderOutcome(report, loaded?.Location ?? string.Empty, sharedPath);
+            })
+            .TheTest
+            .ShouldPass<ProbeOrderOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("both decorators are written, whatever the order they were listed in", FileNames(outcome.Report.Written) == "FirstDecorator.cs,SecondDecorator.cs" && outcome.Report.Skipped.Count == 0, FileNames(outcome.Report.Written) + " " + string.Join("; ", outcome.Report.Skipped));
+                because.ItsTrue("the second service got the dependency beside it, not the one beside the first", string.Equals(outcome.LoadedFrom, outcome.BesideService, StringComparison.OrdinalIgnoreCase), outcome.LoadedFrom);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void ReportATypeThatIsThereButCannotBeLoaded()
+        {
+            string root = TestOutputDir("unloadable-type");
+            string tag = Guid.NewGuid().ToString("N").Substring(0, 8);
+            string dependencyName = "Grown" + tag + "Dep";
+            string serviceName = "Grown" + tag + "Svc";
+            string buildDir = Path.Combine(root, "build");
+            string serviceDir = Path.Combine(root, "svc");
+            Directory.CreateDirectory(buildDir);
+            Directory.CreateDirectory(serviceDir);
+
+            // The service is compiled against a dependency whose IBase is empty; the build of the dependency that
+            // sits beside it has since gained a member, which Widget and Orphan do not implement. Orphan is the
+            // only implementation of IOrphan, so a discovery scan cannot see one for it.
+            RoslynCompiler compiler = new RoslynCompiler();
+            string oldDependency = Path.Combine(buildDir, dependencyName + ".dll");
+            File.WriteAllBytes(oldDependency, compiler.Compile(dependencyName, "namespace " + dependencyName + " { public interface IBase { } }"));
+            string servicePath = Path.Combine(serviceDir, serviceName + ".dll");
+            File.WriteAllBytes(servicePath, compiler.Compile(serviceName,
+                "namespace " + serviceName + " {\n" +
+                "  public interface IWidget { int Make(); }\n" +
+                "  public class Widget : IWidget, global::" + dependencyName + ".IBase { public int Make() { return 1; } }\n" +
+                "  public interface IOrphan { int Wait(); }\n" +
+                "  public class Orphan : IOrphan, global::" + dependencyName + ".IBase { public int Wait() { return 1; } }\n" +
+                "}\n",
+                () => compiler.MetadataReferenceResolver.GetMetaDataReferences()
+                    .Concat(new MetadataReference[] { MetadataReference.CreateFromFile(oldDependency) })
+                    .ToArray()));
+            File.WriteAllBytes(Path.Combine(serviceDir, dependencyName + ".dll"), compiler.Compile(dependencyName,
+                "namespace " + dependencyName + " { public interface IBase { void Added(); } }"));
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is given an implementation that does not fit the build of its dependency on disk", command =>
+            {
+                BamDecoratorGenerationConfig listed = new BamDecoratorGenerationConfig
+                {
+                    AssemblyPath = servicePath,
+                    InterfaceTypeName = serviceName + ".IWidget",
+                    ImplementationTypeName = serviceName + ".Widget",
+                    OutputDirectory = Path.Combine(root, "out-listed")
+                };
+                listed.Services.Add(new DecoratorServiceConfig { Interface = serviceName + ".IWidget", Implementation = serviceName + ".NoSuchWidget" });
+                DecoratorGenerationReport listedReport = command.Execute(listed);
+
+                BamDecoratorGenerationConfig discovered = new BamDecoratorGenerationConfig
+                {
+                    AssemblyPath = servicePath,
+                    OutputDirectory = Path.Combine(root, "out-discovered"),
+                    Discover = new DecoratorDiscoveryConfig { InterfaceOnly = true }
+                };
+                return new DiscoveryOutcome(listedReport, command.Execute(discovered));
+            })
+            .TheTest
+            .ShouldPass<DiscoveryOutcome>((because, outcome) =>
+            {
+                DecoratorGenerationReport listed = outcome.Paired;
+                DecoratorGenerationReport discovered = outcome.InterfaceOnly;
+                because.ItsTrue("the listed pair is skipped and so is the one naming a type that is not there", listed.Written.Count == 0 && listed.Skipped.Count == 2, string.Join("; ", listed.Skipped));
+                because.ItsTrue("the unloadable implementation is reported with the loader's reason, not as not found", listed.Skipped.Count == 2 && listed.Skipped[0].Reason.Contains("could not be loaded") && listed.Skipped[0].Reason.Contains("Added") && !listed.Skipped[0].Reason.Contains("was not found"), listed.Skipped.FirstOrDefault()?.Reason);
+                because.ItsTrue("a name the assembly really lacks is still not found", listed.Skipped.Count == 2 && listed.Skipped[1].Reason.Contains("NoSuchWidget") && listed.Skipped[1].Reason.Contains("was not found"), listed.Skipped.LastOrDefault()?.Reason);
+                because.ItsTrue("discovery reports the types it could not scan", discovered.Skipped.Any(skip => skip.Reason.Contains("were not scanned")), string.Join("; ", discovered.Skipped));
+                because.ItsTrue("and with InterfaceOnly does not fall back to the interface alone for a service whose implementation may be among them", discovered.Written.Count == 0 && discovered.Skipped.Any(skip => skip.InterfaceName == discovered.Skipped[discovered.Skipped.Count - 1].InterfaceName && skip.Reason.Contains("could not be loaded, so its implementation may be among them")), FileNames(discovered.Written) + " " + string.Join("; ", discovered.Skipped));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
         // Compiles {name}Dep.dll (a Token class) into <root>/<name>/dep and {name}Svc.dll (IWidget + Widget whose
         // method returns a Token) into <root>/<name>/svc, so the service's dependency is not beside it.
         // With inheritFromDependency, IWidget also derives from an IBase declared in the dependency.
@@ -876,7 +1051,7 @@ namespace Bam.Tests.Unit
 
         private sealed record TwoAssemblyOutcome(DecoratorGenerationReport WithoutImplementationPath, bool Generated, Exception? MissingAssembly);
 
-        private sealed record MissingFieldOutcome(Exception? NoAssembly, Exception? NoInterface, DecoratorGenerationReport NoImplementation, Exception? NoOutput, Exception? NullConfig, Exception? ListedWithoutInterface, Exception? ListedWithoutAssembly);
+        private sealed record MissingFieldOutcome(Exception? NoAssembly, Exception? NoInterface, DecoratorGenerationReport NoImplementation, Exception? NoOutput, Exception? NullConfig, Exception? ListedWithoutInterface, Exception? ListedWithoutAssembly, Exception? EmptyEntry);
 
         private sealed record UnresolvedOutcome(Exception? MissingAssembly, DecoratorGenerationReport UnknownInterface, DecoratorGenerationReport UnknownImplementation, DecoratorGenerationReport Mismatched, bool WroteRejectedPair);
 

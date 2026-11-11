@@ -127,7 +127,7 @@ namespace Bam
             "#    Implementation: My.Namespace.OtherService    # leave out to decorate the interface alone\n" +
             "#    AssemblyPath:                                # this entry's assembly, when it is not AssemblyPath\n" +
             "#    ImplementationAssemblyPath:\n" +
-            "#Discover:                                        # or decorate every public interface in an assembly, paired with its single public implementation\n" +
+            "#Discover:                                        # or decorate every public interface in an assembly, paired with its single public implementation; interfaces named above are passed over\n" +
             "#  AssemblyPath:                                  # defaults to AssemblyPath\n" +
             "#  Namespace: My.Namespace                        # only interfaces in this namespace and below\n" +
             "#  InterfaceOnly: false                           # true decorates an interface with no (or several) implementations from the interface alone\n";

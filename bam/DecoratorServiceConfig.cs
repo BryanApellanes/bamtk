@@ -9,7 +9,9 @@ namespace Bam
     {
         /// <summary>
         /// Fully-qualified name of the service interface the decorator implements (as accepted by
-        /// <see cref="System.Reflection.Assembly.GetType(string)"/>). Required.
+        /// <see cref="System.Reflection.Assembly.GetType(string)"/>: a nested type is <c>Outer+Inner</c>, and
+        /// the arguments of a closed generic must be assembly-qualified, for example
+        /// <c>My.IRepository`1[[System.String, System.Private.CoreLib]]</c>). Required.
         /// </summary>
         public string Interface { get; set; } = null!;
 

@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using Bam.Generators;
 using Bam.Generators.Decorators;
 
@@ -54,6 +56,11 @@ namespace Bam
             // later entry never leaves a half-finished run behind with no report of what it wrote.
             for (int i = 0; i < services.Count; i++)
             {
+                if (services[i] is null)
+                {
+                    throw new ArgumentException($"{nameof(config.Services)}[{i}] is empty.", nameof(config.Services));
+                }
+
                 RequireValue(services[i].Interface, $"{nameof(config.Services)}[{i}].{nameof(DecoratorServiceConfig.Interface)}");
                 string? interfaceAssemblyPath = InterfaceAssemblyPathOf(config, services[i]);
                 RequireValue(interfaceAssemblyPath, nameof(config.AssemblyPath));
@@ -168,12 +175,14 @@ namespace Bam
             string assemblyName = assembly.GetName().Name ?? assembly.Location;
 
             Type[] types;
+            bool partialScan = false;
             try
             {
                 types = assembly.GetTypes();
             }
             catch (ReflectionTypeLoadException ex)
             {
+                partialScan = true;
                 types = ex.Types.Where(type => type is not null).Select(type => type!).ToArray();
                 string detail = ex.LoaderExceptions.FirstOrDefault(e => e is not null)?.Message ?? ex.Message;
                 run.Skip(assemblyName, null, $"some types in the assembly could not be loaded and were not scanned: {detail}");
@@ -220,6 +229,13 @@ namespace Bam
                 if (implementations.Count == 1)
                 {
                     run.Generate(interfaceType, implementations[0]);
+                }
+                else if (discovery.InterfaceOnly && partialScan)
+                {
+                    // The implementation may be among the types that did not load. Falling back to the interface
+                    // alone here would change the decorator's type for a reason the config never asked for.
+                    run.Skip(interfaceType.FullName ?? interfaceType.Name, null,
+                        $"{implementations.Count} public implementations were found, but some types in '{assemblyName}' could not be loaded, so its implementation may be among them; fix the load failure, or list the service under Services.");
                 }
                 else if (discovery.InterfaceOnly)
                 {
@@ -269,8 +285,9 @@ namespace Bam
         }
 
         // Null with a null loadFailure means the assembly holds no type of that name; null with a loadFailure
-        // means the type is there but something it needs (a base type's assembly, say) could not be loaded.
-        // Assembly.GetType(name) alone returns null for both.
+        // means the type is there but could not be loaded (a dependency is missing, or is a build the type does
+        // not fit). Assembly.GetType(name) alone returns null for both, and the TypeLoadException it throws
+        // when asked to names the requested type in both, so absence is read from the assembly's own metadata.
         private static Type? Resolve(Assembly assembly, string typeName, out string? loadFailure)
         {
             loadFailure = null;
@@ -278,19 +295,59 @@ namespace Bam
             {
                 return assembly.GetType(typeName, true);
             }
-            catch (TypeLoadException ex) when (string.IsNullOrEmpty(ex.TypeName) || ex.TypeName == typeName)
-            {
-                return null;
-            }
             catch (ArgumentException)
             {
                 return null;
             }
             catch (Exception ex) when (IsLoadFailure(ex))
             {
+                if (ex is TypeLoadException && !DefinesType(assembly, typeName))
+                {
+                    return null;
+                }
+
                 loadFailure = ex.Message;
                 return null;
             }
+        }
+
+        // Whether the assembly file's type-definition table holds a type of that full name (nested types
+        // spelled Outer+Inner, as Assembly.GetType takes them). Reads metadata only; loads nothing.
+        private static bool DefinesType(Assembly assembly, string typeName)
+        {
+            try
+            {
+                using FileStream stream = new FileStream(assembly.Location, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using PEReader peReader = new PEReader(stream);
+                MetadataReader reader = peReader.GetMetadataReader();
+                foreach (TypeDefinitionHandle handle in reader.TypeDefinitions)
+                {
+                    if (FullNameOf(reader, reader.GetTypeDefinition(handle)) == typeName)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex) when (ex is IOException || ex is BadImageFormatException || ex is InvalidOperationException || ex is ArgumentException || ex is UnauthorizedAccessException)
+            {
+                // The file cannot be read back; "not found" is then the runtime's word for it.
+                return false;
+            }
+        }
+
+        private static string FullNameOf(MetadataReader reader, TypeDefinition definition)
+        {
+            string name = reader.GetString(definition.Name);
+            TypeDefinitionHandle declaring = definition.GetDeclaringType();
+            if (!declaring.IsNil)
+            {
+                return FullNameOf(reader, reader.GetTypeDefinition(declaring)) + "+" + name;
+            }
+
+            string @namespace = reader.GetString(definition.Namespace);
+            return @namespace.Length == 0 ? name : @namespace + "." + name;
         }
 
         // True for a type built on the decorator runtime's Decorator<T> (every generated decorator is). Compared
