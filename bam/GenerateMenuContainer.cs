@@ -121,7 +121,7 @@ namespace Bam
             "ImplementationAssemblyPath:                       # only when the implementation is in another assembly\n" +
             "OutputDirectory: ./Generated_Decorators           # where each {ImplementationName}Decorator.cs is written\n" +
             "RegistryExtensions: true                          # false generates decorators for another container (no ServiceRegistry extension methods)\n" +
-            "FailOnSkip: false                                 # true fails the run when any service is skipped, not only when nothing is written\n" +
+            "FailOnSkip: false                                 # true fails the run when any service is skipped (Discover's pass-overs included), not only when nothing is written\n" +
             "TemplateDirectory:                                # directory of Handlebars templates overriding the built-in ones; empty consults ./Templates\n" +
             "ProbeDirectories: []                              # directories searched for dependencies that are not next to the assemblies; each must exist\n" +
             "#Services:                                        # more services, one entry each\n" +

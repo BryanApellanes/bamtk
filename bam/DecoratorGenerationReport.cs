@@ -44,7 +44,7 @@ namespace Bam
 
             if (failOnSkip && Skipped.Count > 0)
             {
-                return $"{Skipped.Count} skipped and {nameof(BamDecoratorGenerationConfig.FailOnSkip)} is set, each listed above with its reason. The {Written.Count} decorator file(s) written are on disk.";
+                return $"{nameof(BamDecoratorGenerationConfig.FailOnSkip)} is set and {Skipped.Count} skipped (each is listed above with its reason). The {Written.Count} decorator file(s) written are on disk.";
             }
 
             return null;

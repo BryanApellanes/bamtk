@@ -300,7 +300,7 @@ namespace Bam
             int argumentsStart = typeName.IndexOf('[');
             if (argumentsStart > 0 && char.IsWhiteSpace(typeName[argumentsStart - 1]))
             {
-                return TypeResolution.Rejected("there is whitespace before the generic argument list.");
+                return TypeResolution.Rejected("there is whitespace before '['.");
             }
 
             try

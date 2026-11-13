@@ -90,7 +90,10 @@ namespace Bam
         /// <summary>
         /// Whether a run that skips any service fails. Defaults to false, where only a run that writes nothing
         /// fails. Set it in a build so one mistyped service stops the build. Every file written and every skip
-        /// is still printed first, and the files written stay on disk.
+        /// is still printed first, and the files written stay on disk. What <see cref="Discover"/> passes over
+        /// counts too (an interface with no or several implementations, a namespace with no interface); narrow
+        /// it with <see cref="DecoratorDiscoveryConfig.Namespace"/> or set
+        /// <see cref="DecoratorDiscoveryConfig.InterfaceOnly"/>.
         /// </summary>
         public bool FailOnSkip { get; set; }
 

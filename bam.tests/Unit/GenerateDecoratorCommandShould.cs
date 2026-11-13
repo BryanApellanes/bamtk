@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using Bam.DependencyInjection;
 using Bam.Generators.Decorators;
 using Bam.Test;
@@ -1093,7 +1092,7 @@ namespace Bam.Tests.Unit
                 because.ItsTrue("each says the runtime rejected the name, never that it was not found", report.Skipped.All(skip => skip.Reason.Contains("not a type name the runtime accepts") && !skip.Reason.Contains("was not found")), skips);
                 because.ItsTrue("and carries the runtime's own reason", report.Skipped.Take(4).All(skip => skip.Reason.Length > skip.Reason.IndexOf(": ", StringComparison.Ordinal) + 2), skips);
                 because.ItsTrue("a name ending in whitespace says so", report.Skipped.Count == 6 && report.Skipped[4].Reason.Contains("ends in whitespace"), skips);
-                because.ItsTrue("and so does whitespace before the generic arguments", report.Skipped.Count == 6 && report.Skipped[5].Reason.Contains("before the generic argument list"), skips);
+                because.ItsTrue("and so does whitespace before the generic arguments", report.Skipped.Count == 6 && report.Skipped[5].Reason.Contains("whitespace before '['"), skips);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -1255,8 +1254,7 @@ namespace Bam.Tests.Unit
         // so following the name would load it.
         private static CompiledService CompileEscapingService(string buildDir, string serviceDir, string outside, string name, string reference)
         {
-            byte[] referenceBytes = Encoding.UTF8.GetBytes(reference);
-            string placeholder = ("Q" + name + new string('q', referenceBytes.Length)).Substring(0, referenceBytes.Length);
+            string placeholder = ReferenceNamePatcher.PlaceholderFor(name, reference);
             string baseNamespace = name + "Base";
             RoslynCompiler compiler = new RoslynCompiler();
             string placeholderPath = Path.Combine(buildDir, placeholder + ".dll");
@@ -1272,14 +1270,7 @@ namespace Bam.Tests.Unit
                     .Concat(new MetadataReference[] { MetadataReference.CreateFromFile(placeholderPath) })
                     .ToArray());
 
-            byte[] needle = Encoding.UTF8.GetBytes(placeholder + "\0");
-            int at = IndexOf(image, needle, 0);
-            if (at < 0 || IndexOf(image, needle, at + 1) >= 0)
-            {
-                throw new InvalidOperationException($"Expected the dependency name once in {serviceName}'s image.");
-            }
-
-            Array.Copy(referenceBytes, 0, image, at, referenceBytes.Length);
+            ReferenceNamePatcher.Rename(image, placeholder, reference);
             string servicePath = Path.Combine(serviceDir, serviceName + ".dll");
             File.WriteAllBytes(servicePath, image);
 
@@ -1314,25 +1305,6 @@ namespace Bam.Tests.Unit
             System.Reflection.Metadata.BlobBuilder image = new System.Reflection.Metadata.BlobBuilder();
             pe.Serialize(image);
             File.WriteAllBytes(path, image.ToArray());
-        }
-
-        private static int IndexOf(byte[] haystack, byte[] needle, int start)
-        {
-            for (int i = start; i <= haystack.Length - needle.Length; i++)
-            {
-                int j = 0;
-                while (j < needle.Length && haystack[i + j] == needle[j])
-                {
-                    j++;
-                }
-
-                if (j == needle.Length)
-                {
-                    return i;
-                }
-            }
-
-            return -1;
         }
 
         private static SkippedDecorator? OnlySkip(DecoratorGenerationReport report)
