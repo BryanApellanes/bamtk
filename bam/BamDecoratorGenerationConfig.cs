@@ -22,7 +22,7 @@ namespace Bam
 
         /// <summary>
         /// Path to the compiled assembly that contains the service interface(s). Loaded via
-        /// <see cref="System.Reflection.Assembly.LoadFrom(string)"/>; dependencies are resolved from the
+        /// <see cref="System.Runtime.Loader.AssemblyLoadContext.LoadFromAssemblyPath(string)"/>; dependencies are resolved from the
         /// assembly's own directory and from <see cref="ProbeDirectories"/>. Required unless every
         /// <see cref="Services"/> entry and <see cref="Discover"/> name their own assembly.
         /// </summary>
@@ -86,6 +86,16 @@ namespace Bam
         /// for hosts on another container.
         /// </summary>
         public bool RegistryExtensions { get; set; } = true;
+
+        /// <summary>
+        /// Whether a run that skips any service fails. Defaults to false, where only a run that writes nothing
+        /// fails. Set it in a build so one mistyped service stops the build. Every file written and every skip
+        /// is still printed first, and the files written stay on disk. What <see cref="Discover"/> passes over
+        /// counts too (an interface with no or several implementations, a namespace with no interface); narrow
+        /// it with <see cref="DecoratorDiscoveryConfig.Namespace"/> or set
+        /// <see cref="DecoratorDiscoveryConfig.InterfaceOnly"/>.
+        /// </summary>
+        public bool FailOnSkip { get; set; }
 
         /// <summary>
         /// Lists every explicitly named service: the single pair from <see cref="InterfaceTypeName"/> /

@@ -19,7 +19,7 @@ namespace Bam
 
         /// <summary>
         /// Path to the compiled assembly that contains the service type. Loaded via
-        /// <see cref="System.Reflection.Assembly.LoadFrom(string)"/>; the assembly's own dependencies must be
+        /// <see cref="System.Runtime.Loader.AssemblyLoadContext.LoadFromAssemblyPath(string)"/>; the assembly's own dependencies must be
         /// resolvable (present alongside it). Required.
         /// </summary>
         public string AssemblyPath { get; set; } = null!;
