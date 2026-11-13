@@ -27,5 +27,27 @@ namespace Bam
 
         /// <summary>Gets a value indicating whether at least one decorator was written.</summary>
         public bool WroteAnything => Written.Count > 0;
+
+        /// <summary>
+        /// Gets why the run counts as failed, or null when it does not: it wrote nothing, or
+        /// <paramref name="failOnSkip"/> is set and it skipped a service. The message counts the skips and does
+        /// not repeat them; they are printed with their reasons beside it.
+        /// </summary>
+        /// <param name="failOnSkip">The config's <see cref="BamDecoratorGenerationConfig.FailOnSkip"/>.</param>
+        /// <returns>The failure message, or null.</returns>
+        public string? FailureMessage(bool failOnSkip)
+        {
+            if (!WroteAnything)
+            {
+                return $"No decorator was generated: {Skipped.Count} skipped, each listed above with its reason.";
+            }
+
+            if (failOnSkip && Skipped.Count > 0)
+            {
+                return $"{Skipped.Count} skipped and {nameof(BamDecoratorGenerationConfig.FailOnSkip)} is set, each listed above with its reason. The {Written.Count} decorator file(s) written are on disk.";
+            }
+
+            return null;
+        }
     }
 }

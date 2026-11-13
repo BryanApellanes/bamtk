@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Runtime.Loader;
 
 namespace Bam
 {
@@ -15,8 +17,15 @@ namespace Bam
     /// Hooks <see cref="AppDomain.AssemblyResolve"/>, which the runtime raises only after its own probing
     /// fails and which, unlike <c>AssemblyLoadContext.Resolving</c>, says which assembly is asking; unhooks it
     /// on <see cref="Dispose"/>. Assemblies are loaded into the default load context with
-    /// <see cref="Assembly.LoadFrom(string)"/> because decorator generation reflects over runtime
+    /// <see cref="AssemblyLoadContext.LoadFromAssemblyPath(string)"/> because generation reflects over runtime
     /// <see cref="Type"/>s; a metadata-only context would not do.
+    /// </para>
+    /// <para>
+    /// Not <see cref="Assembly.LoadFrom(string)"/>: that also registers the runtime's own lookup beside the
+    /// loaded file, which joins a reference's name onto the directory as it stands, so a name such as
+    /// <c>../outside/Dep</c> or <c>\\host\share\Dep</c> would open a file the assembly chose, outside every
+    /// configured directory (bamtk#111). This probe answers only for a reference whose name is a bare file
+    /// name, and only from the directories it was given.
     /// </para>
     /// <para>
     /// Two limits follow from loading into one context. A dependency is matched on its simple name alone:
@@ -30,6 +39,9 @@ namespace Bam
     {
         private static readonly string[] Extensions = new string[] { ".dll", ".exe" };
 
+        // Written by Load and AddDirectory on the caller's thread, read by Resolve on whatever thread a
+        // resolution fails on.
+        private readonly object _sync = new object();
         private readonly List<string> _loadedDirectories = new List<string>();
         private readonly List<string> _probeDirectories = new List<string>();
         private bool _disposed;
@@ -53,7 +65,16 @@ namespace Bam
         /// Gets the directories searched after the requesting assembly's own, as full paths, in search order:
         /// the directories of the assemblies this probe loaded, then the configured fallback directories.
         /// </summary>
-        public IReadOnlyList<string> Directories => _loadedDirectories.Concat(_probeDirectories).ToList();
+        public IReadOnlyList<string> Directories
+        {
+            get
+            {
+                lock (_sync)
+                {
+                    return _loadedDirectories.Concat(_probeDirectories).ToList();
+                }
+            }
+        }
 
         /// <summary>
         /// Adds a fallback directory, searched after the directories of the loaded assemblies. A directory
@@ -62,7 +83,10 @@ namespace Bam
         /// <param name="directory">The directory.</param>
         public void AddDirectory(string? directory)
         {
-            Add(_probeDirectories, directory);
+            lock (_sync)
+            {
+                Add(_probeDirectories, directory);
+            }
         }
 
         /// <summary>
@@ -83,8 +107,12 @@ namespace Bam
                 throw new FileNotFoundException($"Assembly not found: {assemblyPath}", assemblyPath);
             }
 
-            Assembly assembly = Assembly.LoadFrom(assemblyFile.FullName);
-            Add(_loadedDirectories, assemblyFile.DirectoryName);
+            Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyFile.FullName);
+            lock (_sync)
+            {
+                Add(_loadedDirectories, assemblyFile.DirectoryName);
+            }
+
             return assembly;
         }
 
@@ -114,10 +142,37 @@ namespace Bam
             }
         }
 
+        /// <summary>
+        /// Whether <paramref name="simpleName"/> can only name a file inside the directory it is joined onto: not
+        /// blank, and no directory separator, drive, root or share prefix. A reference name is whatever the
+        /// assembly that carries it says, so anything else is refused rather than followed.
+        /// </summary>
+        /// <param name="simpleName">An assembly reference's simple name.</param>
+        /// <returns>True when the name is a bare file name.</returns>
+        public static bool IsBareFileName([NotNullWhen(true)] string? simpleName)
+        {
+            return !string.IsNullOrWhiteSpace(simpleName)
+                && simpleName.IndexOf('/') < 0
+                && simpleName.IndexOf('\\') < 0
+                && simpleName.IndexOf(':') < 0
+                && !Path.IsPathRooted(simpleName)
+                && string.Equals(Path.GetFileName(simpleName), simpleName, StringComparison.Ordinal);
+        }
+
         private Assembly? Resolve(object? sender, ResolveEventArgs args)
         {
-            string? simpleName = new AssemblyName(args.Name).Name;
-            if (string.IsNullOrEmpty(simpleName))
+            string? simpleName;
+            try
+            {
+                simpleName = new AssemblyName(args.Name).Name;
+            }
+            catch (Exception ex) when (ex is FileLoadException || ex is ArgumentException)
+            {
+                // A name the parser refuses is not one to look for on disk.
+                return null;
+            }
+
+            if (!IsBareFileName(simpleName))
             {
                 return null;
             }
@@ -131,9 +186,12 @@ namespace Bam
                 Add(searched, Path.GetDirectoryName(requestingLocation));
             }
 
-            foreach (string directory in _loadedDirectories.Concat(_probeDirectories))
+            lock (_sync)
             {
-                Add(searched, directory);
+                foreach (string directory in _loadedDirectories.Concat(_probeDirectories))
+                {
+                    Add(searched, directory);
+                }
             }
 
             foreach (string directory in searched)
@@ -143,7 +201,7 @@ namespace Bam
                     string candidate = Path.Combine(directory, simpleName + extension);
                     if (File.Exists(candidate))
                     {
-                        return Assembly.LoadFrom(candidate);
+                        return AssemblyLoadContext.Default.LoadFromAssemblyPath(candidate);
                     }
                 }
             }

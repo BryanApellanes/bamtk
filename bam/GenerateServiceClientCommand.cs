@@ -44,7 +44,11 @@ namespace Bam
                 throw new FileNotFoundException($"Service assembly not found: {config.AssemblyPath}", config.AssemblyPath);
             }
 
-            Assembly assembly = Assembly.LoadFrom(assemblyFile.FullName);
+            // Through AssemblyProbe, not Assembly.LoadFrom: dependencies beside the assembly still resolve, and a
+            // reference whose name is a path is not followed outside its directory (bamtk#111). The probe stays
+            // hooked while the generator reflects over the types.
+            using AssemblyProbe probe = new AssemblyProbe(null);
+            Assembly assembly = probe.Load(assemblyFile.FullName);
 
             Type serviceType = assembly.GetType(config.ServiceTypeName)
                 ?? throw new ArgumentException(

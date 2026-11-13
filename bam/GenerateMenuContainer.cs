@@ -72,7 +72,8 @@ namespace Bam
         /// service described by the <c>--config</c> file (e.g. <c>bam generate Decorator --config ./decorator.yaml</c>)
         /// and writes each <c>{ImplementationName}Decorator.cs</c> to the configured output directory. Every file
         /// written and every service skipped (with its reason) is printed. An invalid config propagates to the CLI
-        /// broker as a thrown exception, which reports it and exits non-zero; so does a run that writes nothing.
+        /// broker as a thrown exception, which reports it and exits non-zero; so does a run that writes nothing,
+        /// and, with <see cref="BamDecoratorGenerationConfig.FailOnSkip"/> set, a run that skips any service.
         /// </summary>
         /// <param name="config">The generation config, deserialized from the <c>--config</c> YAML/JSON file by the brokered argument provider.</param>
         [ConsoleCommand("decorator", "Generate strongly-typed service decorators from a --config YAML/JSON file")]
@@ -89,10 +90,10 @@ namespace Bam
                 Message.PrintLine("Skipped {0}", skipped.ToString());
             }
 
-            if (!report.WroteAnything)
+            string? failure = report.FailureMessage(config.FailOnSkip);
+            if (failure is not null)
             {
-                throw new InvalidOperationException(
-                    $"No decorator was generated: {report.Skipped.Count} skipped, each listed above with its reason.");
+                throw new InvalidOperationException(failure);
             }
         }
 
@@ -120,6 +121,7 @@ namespace Bam
             "ImplementationAssemblyPath:                       # only when the implementation is in another assembly\n" +
             "OutputDirectory: ./Generated_Decorators           # where each {ImplementationName}Decorator.cs is written\n" +
             "RegistryExtensions: true                          # false generates decorators for another container (no ServiceRegistry extension methods)\n" +
+            "FailOnSkip: false                                 # true fails the run when any service is skipped, not only when nothing is written\n" +
             "TemplateDirectory:                                # directory of Handlebars templates overriding the built-in ones; empty consults ./Templates\n" +
             "ProbeDirectories: []                              # directories searched for dependencies that are not next to the assemblies; each must exist\n" +
             "#Services:                                        # more services, one entry each\n" +

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Text;
 using Bam.DependencyInjection;
 using Bam.Generators.Decorators;
 using Bam.Test;
@@ -954,6 +956,9 @@ namespace Bam.Tests.Unit
                 "  public class Orphan : IOrphan, global::" + dependencyName + ".IBase { public int Wait() { return 1; } }\n" +
                 "  public interface IGen<T> { T Get(); }\n" +
                 "  public class BadGen<T> : IGen<T>, global::" + dependencyName + ".IBase { public T Get() { return default(T)!; } }\n" +
+                "  public interface IMany { int Count(); }\n" +
+                "  public class ManyA : IMany { public int Count() { return 1; } }\n" +
+                "  public class ManyB : IMany { public int Count() { return 2; } }\n" +
                 "}\n",
                 () => compiler.MetadataReferenceResolver.GetMetaDataReferences()
                     .Concat(new MetadataReference[] { MetadataReference.CreateFromFile(oldDependency) })
@@ -1002,6 +1007,7 @@ namespace Bam.Tests.Unit
                 because.ItsTrue("a closed generic over a definition the assembly lacks is still not found", listed.Skipped.Count == 4 && listed.Skipped[3].Reason.Contains("IGen`2") && listed.Skipped[3].Reason.Contains("was not found"), listed.Skipped.Count == 4 ? listed.Skipped[3].Reason : "count");
                 because.ItsTrue("discovery reports the types it could not scan", discovered.Skipped.Any(skip => skip.Reason.Contains("were not scanned")), string.Join("; ", discovered.Skipped));
                 because.ItsTrue("and with InterfaceOnly does not fall back to the interface alone for a service whose implementation may be among them", discovered.Written.Count == 0 && discovered.Skipped.Any(skip => skip.InterfaceName == discovered.Skipped[discovered.Skipped.Count - 1].InterfaceName && skip.Reason.Contains("could not be loaded, so its implementation may be among them")), FileNames(discovered.Written) + " " + string.Join("; ", discovered.Skipped));
+                because.ItsTrue("nor for one with several implementations found, since there may be more", discovered.Skipped.Any(skip => skip.InterfaceName.EndsWith(".IMany", StringComparison.Ordinal) && skip.Reason.Contains("2 public implementations were found and some types") && skip.Reason.Contains("list the pair you want under Services")), string.Join("; ", discovered.Skipped));
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -1036,6 +1042,297 @@ namespace Bam.Tests.Unit
                     .ToArray()));
 
             return new CompiledService(servicePath, dependencyDir, dependencyName, name + ".Svc.IWidget", name + ".Svc.Widget");
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void SkipANameTheRuntimeRejectsAndGoOn()
+        {
+            // bamtk#112: a name the runtime rejects without a load failure used to end the run (generic
+            // arguments on a type that is not generic) or read as "not found" (a wrong argument count, a broken
+            // constraint). Each is now one skip with the runtime's reason, between two services that are written.
+            string root = TestOutputDir("rejected-names");
+            string name = "Rej" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            Directory.CreateDirectory(root);
+            string assemblyPath = Path.Combine(root, name + ".dll");
+            File.WriteAllBytes(assemblyPath, new RoslynCompiler().Compile(name,
+                "namespace " + name + " {\n" +
+                "  public interface IFirst { int One(); } public class First : IFirst { public int One() { return 1; } }\n" +
+                "  public interface IWidget { int Make(); } public class Widget : IWidget { public int Make() { return 1; } }\n" +
+                "  public interface ILast { int Two(); } public class Last : ILast { public int Two() { return 2; } }\n" +
+                "  public interface IGen<T> { T Get(); }\n" +
+                "  public interface IStructOnly<T> where T : struct { T Get(); }\n" +
+                "}\n"));
+            const string OfString = "[[System.String, System.Private.CoreLib]]";
+            const string OfStringAndInt = "[[System.String, System.Private.CoreLib],[System.Int32, System.Private.CoreLib]]";
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is given names the runtime rejects between two good services", command =>
+            {
+                BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig { AssemblyPath = assemblyPath, OutputDirectory = Path.Combine(root, "out") };
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IFirst", Implementation = name + ".First" });
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IWidget", Implementation = name + ".Widget" + OfString });
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IWidget" + OfString });
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IGen`1" + OfStringAndInt });
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IStructOnly`1" + OfString });
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".ILast ", Implementation = name + ".Last" });
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IGen`1 " + OfString });
+                // Leading whitespace is skipped by the runtime's parser, so this one is written.
+                config.Services.Add(new DecoratorServiceConfig { Interface = " " + name + ".IWidget", Implementation = name + ".Widget" });
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".ILast", Implementation = name + ".Last" });
+                return command.Execute(config);
+            })
+            .TheTest
+            .ShouldPass<DecoratorGenerationReport>((because, report) =>
+            {
+                string skips = string.Join("; ", report.Skipped);
+                because.ItsTrue("the good services before and after the rejected names are written", report.Written.Count == 3 && FileNames(report.Written).Contains("FirstDecorator.cs") && FileNames(report.Written).Contains("WidgetDecorator.cs") && FileNames(report.Written).Contains("LastDecorator.cs"), FileNames(report.Written));
+                because.ItsTrue("each rejected name is one skip", report.Skipped.Count == 6, skips);
+                because.ItsTrue("each says the runtime rejected the name, never that it was not found", report.Skipped.All(skip => skip.Reason.Contains("not a type name the runtime accepts") && !skip.Reason.Contains("was not found")), skips);
+                because.ItsTrue("and carries the runtime's own reason", report.Skipped.Take(4).All(skip => skip.Reason.Length > skip.Reason.IndexOf(": ", StringComparison.Ordinal) + 2), skips);
+                because.ItsTrue("a name ending in whitespace says so", report.Skipped.Count == 6 && report.Skipped[4].Reason.Contains("ends in whitespace"), skips);
+                because.ItsTrue("and so does whitespace before the generic arguments", report.Skipped.Count == 6 && report.Skipped[5].Reason.Contains("before the generic argument list"), skips);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void ReportAMissingNameQuicklyInADeeplyNestedAssembly()
+        {
+            // bamtk#112: the walk up a row's declaring types was bounded in steps but not in the length of the
+            // name it built. A deep chain of same-named nested types made every row pass the name check and walk
+            // the whole chain, concatenating at every step (the security audit of bamtk#98 stalled a run for 55 s
+            // at 9,000 levels). The walk now stops once the name outgrows the request. C# refuses a nested type
+            // named like its parent, so the assembly is written with System.Reflection.Metadata.
+            string root = TestOutputDir("deep-nesting");
+            string name = "Deep" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            Directory.CreateDirectory(root);
+            string assemblyPath = Path.Combine(root, name + ".dll");
+            WriteDeeplyNestedAssembly(assemblyPath, name, 9000);
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is asked for a name the assembly lacks whose last part names 9,000 nested types", command =>
+            {
+                BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig { AssemblyPath = assemblyPath, OutputDirectory = Path.Combine(root, "out") };
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".Nope.A" });
+                Stopwatch watch = Stopwatch.StartNew();
+                DecoratorGenerationReport report = command.Execute(config);
+                watch.Stop();
+                return new DeepNestingOutcome(report, watch.ElapsedMilliseconds);
+            })
+            .TheTest
+            .ShouldPass<DeepNestingOutcome>((because, outcome) =>
+            {
+                string skips = string.Join("; ", outcome.Report.Skipped);
+                because.ItsTrue("the missing name is reported as not found", outcome.Report.Skipped.Count == 1 && outcome.Report.Skipped[0].Reason.Contains("was not found"), skips);
+                because.ItsTrue("in well under the time a full walk takes", outcome.Milliseconds < 3000, $"{outcome.Milliseconds} ms");
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void FailTheMenuCommandOnASkipWhenFailOnSkipIsSet()
+        {
+            // bamtk#107.
+            string strictDir = TestOutputDir("fail-on-skip");
+            string defaultDir = TestOutputDir("fail-on-skip-default");
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateMenuContainer>().Use(new GenerateMenuContainer(new ServiceRegistry()));
+            })
+            .When<GenerateMenuContainer>("runs the decorator command with one good and one mistyped service", menu =>
+            {
+                BamDecoratorGenerationConfig strict = ValidConfig(strictDir);
+                strict.Services.Add(new DecoratorServiceConfig { Interface = "No.Such.IService" });
+                strict.FailOnSkip = true;
+                Exception? failed = Thrown(() => menu.Decorator(strict));
+
+                BamDecoratorGenerationConfig lenient = ValidConfig(defaultDir);
+                lenient.Services.Add(new DecoratorServiceConfig { Interface = "No.Such.IService" });
+                Exception? passed = Thrown(() => menu.Decorator(lenient));
+                return new FailOnSkipOutcome(failed, File.Exists(Path.Combine(strictDir, "GreetingServiceDecorator.cs")), passed, lenient.FailOnSkip, GenerateMenuContainer.DecoratorConfigTemplate.Contains("FailOnSkip: false"));
+            })
+            .TheTest
+            .ShouldPass<FailOnSkipOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("with FailOnSkip a run that skipped a service throws", outcome.Strict is InvalidOperationException && outcome.Strict.Message.Contains("1 skipped") && outcome.Strict.Message.Contains("FailOnSkip"), outcome.Strict?.Message);
+                because.ItsTrue("the message counts the skips without repeating them", outcome.Strict is not null && !outcome.Strict.Message.Contains("No.Such.IService"), outcome.Strict?.Message);
+                because.ItsTrue("the file it wrote stays on disk", outcome.WrittenKept);
+                because.ItsTrue("FailOnSkip is off by default, and then a run that wrote something does not throw", !outcome.DefaultSetting && outcome.Lenient is null, outcome.Lenient?.Message);
+                because.ItsTrue("the starter config shows the key", outcome.TemplateShowsKey);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest]
+        public void TellABareReferenceNameFromAPath()
+        {
+            When.A<GenerateDecoratorCommandShould>("checks reference names", this, test =>
+            {
+                string[] paths = new string[] { "../outside/Dep", "..\\outside\\Dep", "C:\\outside\\Dep", "/outside/Dep", "\\\\host\\share\\Dep", "//host/share/Dep", "C:Dep", "Dep/", string.Empty, " " };
+                return new BareNameOutcome(
+                    AssemblyProbe.IsBareFileName("Dep") && AssemblyProbe.IsBareFileName("My.Company.Dep") && AssemblyProbe.IsBareFileName("Dep-1_2"),
+                    paths.Where(path => AssemblyProbe.IsBareFileName(path)).ToArray());
+            })
+            .TheTest
+            .ShouldPass<BareNameOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("simple names are bare", outcome.BareAccepted);
+                because.ItsTrue("no path, drive, root or share form is", outcome.PathsAccepted.Length == 0, string.Join(", ", outcome.PathsAccepted));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void NotFollowAReferenceNameOutOfTheConfiguredDirectories()
+        {
+            // bamtk#111: a reference whose name is a path made the CLI load a file wherever the name pointed. No
+            // compiler emits such a reference, so each service is compiled against a dependency with an ordinary
+            // name of the same length, and the name is then replaced in the service's string heap.
+            string root = TestOutputDir("escaping-reference");
+            string tag = Guid.NewGuid().ToString("N").Substring(0, 8);
+            string outside = Path.Combine(root, "outside");
+            string serviceDir = Path.Combine(root, "svc");
+            string buildDir = Path.Combine(root, "build");
+            Directory.CreateDirectory(outside);
+            Directory.CreateDirectory(serviceDir);
+            Directory.CreateDirectory(buildDir);
+            string[] references = new string[]
+            {
+                "../outside/Fwd" + tag,
+                "..\\outside\\Back" + tag,
+                Path.Combine(outside, "Rooted" + tag),
+            };
+            List<CompiledService> services = new List<CompiledService>();
+            for (int i = 0; i < references.Length; i++)
+            {
+                services.Add(CompileEscapingService(buildDir, serviceDir, outside, "Esc" + i + tag, references[i]));
+            }
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("decorates services whose dependency's reference name is a path out of their directory", command =>
+            {
+                BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig { AssemblyPath = services[0].ServicePath, OutputDirectory = Path.Combine(root, "out") };
+                foreach (CompiledService service in services)
+                {
+                    config.Services.Add(new DecoratorServiceConfig { AssemblyPath = service.ServicePath, Interface = service.InterfaceName, Implementation = service.ImplementationName });
+                }
+
+                DecoratorGenerationReport report = command.Execute(config);
+                string[] loadedFromOutside = AppDomain.CurrentDomain.GetAssemblies()
+                    .Where(assembly => !assembly.IsDynamic && assembly.Location.StartsWith(outside, StringComparison.OrdinalIgnoreCase))
+                    .Select(assembly => assembly.Location)
+                    .ToArray();
+                return new EscapeOutcome(report, loadedFromOutside);
+            })
+            .TheTest
+            .ShouldPass<EscapeOutcome>((because, outcome) =>
+            {
+                string skips = string.Join("; ", outcome.Report.Skipped);
+                because.ItsTrue("nothing outside the configured directories was loaded", outcome.LoadedFromOutside.Length == 0, string.Join(", ", outcome.LoadedFromOutside));
+                because.ItsTrue("each service is skipped as one whose dependency could not be loaded", outcome.Report.Written.Count == 0 && outcome.Report.Skipped.Count == 3 && outcome.Report.Skipped.All(skip => skip.Reason.Contains("could not be loaded")), skips);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        // Compiles {name}Svc.dll (IWidget, and a Widget that also implements a dependency's IBase) into serviceDir
+        // against a dependency whose simple name is as long as reference, then rewrites that name in the
+        // service's metadata to reference. A dependency the rewritten name points at is written under outside,
+        // so following the name would load it.
+        private static CompiledService CompileEscapingService(string buildDir, string serviceDir, string outside, string name, string reference)
+        {
+            byte[] referenceBytes = Encoding.UTF8.GetBytes(reference);
+            string placeholder = ("Q" + name + new string('q', referenceBytes.Length)).Substring(0, referenceBytes.Length);
+            string baseNamespace = name + "Base";
+            RoslynCompiler compiler = new RoslynCompiler();
+            string placeholderPath = Path.Combine(buildDir, placeholder + ".dll");
+            File.WriteAllBytes(placeholderPath, compiler.Compile(placeholder, "namespace " + baseNamespace + " { public interface IBase { } }"));
+
+            string serviceName = name + "Svc";
+            byte[] image = compiler.Compile(serviceName,
+                "namespace " + serviceName + " {\n" +
+                "  public interface IWidget { int Make(); }\n" +
+                "  public class Widget : IWidget, global::" + baseNamespace + ".IBase { public int Make() { return 1; } }\n" +
+                "}\n",
+                () => compiler.MetadataReferenceResolver.GetMetaDataReferences()
+                    .Concat(new MetadataReference[] { MetadataReference.CreateFromFile(placeholderPath) })
+                    .ToArray());
+
+            byte[] needle = Encoding.UTF8.GetBytes(placeholder + "\0");
+            int at = IndexOf(image, needle, 0);
+            if (at < 0 || IndexOf(image, needle, at + 1) >= 0)
+            {
+                throw new InvalidOperationException($"Expected the dependency name once in {serviceName}'s image.");
+            }
+
+            Array.Copy(referenceBytes, 0, image, at, referenceBytes.Length);
+            string servicePath = Path.Combine(serviceDir, serviceName + ".dll");
+            File.WriteAllBytes(servicePath, image);
+
+            // The file the name points at, under outside.
+            string leaf = reference.Substring(reference.LastIndexOfAny(new char[] { '/', '\\' }) + 1);
+            File.WriteAllBytes(Path.Combine(outside, leaf + ".dll"), compiler.Compile(leaf, "namespace " + baseNamespace + " { public interface IBase { } }"));
+            return new CompiledService(servicePath, outside, reference, serviceName + ".IWidget", serviceName + ".Widget");
+        }
+
+        // An assembly holding {name}.A with depth types nested below it, every one named A, and nothing else.
+        private static void WriteDeeplyNestedAssembly(string path, string name, int depth)
+        {
+            System.Reflection.Metadata.Ecma335.MetadataBuilder metadata = new System.Reflection.Metadata.Ecma335.MetadataBuilder();
+            metadata.AddModule(0, metadata.GetOrAddString(name + ".dll"), metadata.GetOrAddGuid(Guid.NewGuid()), default(System.Reflection.Metadata.GuidHandle), default(System.Reflection.Metadata.GuidHandle));
+            metadata.AddAssembly(metadata.GetOrAddString(name), new Version(1, 0, 0, 0), default(System.Reflection.Metadata.StringHandle), default(System.Reflection.Metadata.BlobHandle), default(System.Reflection.AssemblyFlags), System.Reflection.AssemblyHashAlgorithm.Sha1);
+            System.Reflection.Metadata.FieldDefinitionHandle fields = System.Reflection.Metadata.Ecma335.MetadataTokens.FieldDefinitionHandle(1);
+            System.Reflection.Metadata.MethodDefinitionHandle methods = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(1);
+            metadata.AddTypeDefinition(default(System.Reflection.TypeAttributes), default(System.Reflection.Metadata.StringHandle), metadata.GetOrAddString("<Module>"), default(System.Reflection.Metadata.EntityHandle), fields, methods);
+            System.Reflection.Metadata.StringHandle a = metadata.GetOrAddString("A");
+            System.Reflection.Metadata.TypeDefinitionHandle outer = metadata.AddTypeDefinition(System.Reflection.TypeAttributes.Public | System.Reflection.TypeAttributes.Abstract | System.Reflection.TypeAttributes.Interface, metadata.GetOrAddString(name), a, default(System.Reflection.Metadata.EntityHandle), fields, methods);
+            for (int level = 0; level < depth; level++)
+            {
+                System.Reflection.Metadata.TypeDefinitionHandle inner = metadata.AddTypeDefinition(System.Reflection.TypeAttributes.NestedPublic | System.Reflection.TypeAttributes.Abstract | System.Reflection.TypeAttributes.Interface, default(System.Reflection.Metadata.StringHandle), a, default(System.Reflection.Metadata.EntityHandle), fields, methods);
+                metadata.AddNestedType(inner, outer);
+                outer = inner;
+            }
+
+            System.Reflection.PortableExecutable.ManagedPEBuilder pe = new System.Reflection.PortableExecutable.ManagedPEBuilder(
+                System.Reflection.PortableExecutable.PEHeaderBuilder.CreateLibraryHeader(),
+                new System.Reflection.Metadata.Ecma335.MetadataRootBuilder(metadata),
+                new System.Reflection.Metadata.BlobBuilder());
+            System.Reflection.Metadata.BlobBuilder image = new System.Reflection.Metadata.BlobBuilder();
+            pe.Serialize(image);
+            File.WriteAllBytes(path, image.ToArray());
+        }
+
+        private static int IndexOf(byte[] haystack, byte[] needle, int start)
+        {
+            for (int i = start; i <= haystack.Length - needle.Length; i++)
+            {
+                int j = 0;
+                while (j < needle.Length && haystack[i + j] == needle[j])
+                {
+                    j++;
+                }
+
+                if (j == needle.Length)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private static SkippedDecorator? OnlySkip(DecoratorGenerationReport report)
@@ -1079,5 +1376,13 @@ namespace Bam.Tests.Unit
         private sealed record MenuOutcome(Exception? NothingWritten, Exception? Written, bool FileExists);
 
         private sealed record CompiledService(string ServicePath, string DependencyDirectory, string DependencyName, string InterfaceName, string ImplementationName);
+
+        private sealed record DeepNestingOutcome(DecoratorGenerationReport Report, long Milliseconds);
+
+        private sealed record FailOnSkipOutcome(Exception? Strict, bool WrittenKept, Exception? Lenient, bool DefaultSetting, bool TemplateShowsKey);
+
+        private sealed record BareNameOutcome(bool BareAccepted, string[] PathsAccepted);
+
+        private sealed record EscapeOutcome(DecoratorGenerationReport Report, string[] LoadedFromOutside);
     }
 }

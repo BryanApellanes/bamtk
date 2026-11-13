@@ -130,12 +130,11 @@ namespace Bam
                 return;
             }
 
-            Type? interfaceType = Resolve(interfaceAssembly, service.Interface, out string? interfaceLoadFailure);
+            TypeResolution interfaceResolution = Resolve(interfaceAssembly, service.Interface);
+            Type? interfaceType = interfaceResolution.Type;
             if (interfaceType is null)
             {
-                run.Skip(service.Interface, implementationName, interfaceLoadFailure is null
-                    ? $"interface type '{service.Interface}' was not found in assembly '{interfaceAssembly.Location}'."
-                    : $"interface type '{service.Interface}' is in assembly '{interfaceAssembly.Location}', but a dependency could not be loaded: {interfaceLoadFailure}");
+                run.Skip(service.Interface, implementationName, interfaceResolution.Reason("interface", service.Interface, interfaceAssembly));
                 return;
             }
 
@@ -145,12 +144,11 @@ namespace Bam
             Type? implementationType = null;
             if (implementationName is not null)
             {
-                implementationType = Resolve(implementationAssembly, implementationName, out string? implementationLoadFailure);
+                TypeResolution implementationResolution = Resolve(implementationAssembly, implementationName);
+                implementationType = implementationResolution.Type;
                 if (implementationType is null)
                 {
-                    run.Skip(service.Interface, implementationName, implementationLoadFailure is null
-                        ? $"implementation type '{implementationName}' was not found in assembly '{implementationAssembly.Location}'."
-                        : $"implementation type '{implementationName}' is in assembly '{implementationAssembly.Location}', but a dependency could not be loaded: {implementationLoadFailure}");
+                    run.Skip(service.Interface, implementationName, implementationResolution.Reason("implementation", implementationName, implementationAssembly));
                     return;
                 }
             }
@@ -285,41 +283,56 @@ namespace Bam
                 new HandlebarsEmbeddedResources(typeof(HandlebarsDecoratorCodeWriter).Assembly));
         }
 
-        // Null with a null loadFailure means the assembly holds no type of that name; null with a loadFailure
-        // means the type is there but could not be loaded (a dependency is missing, or is a build the type does
-        // not fit). Assembly.GetType(name) alone returns null for both, and the TypeLoadException it throws
-        // when asked to names the requested type in both, so absence is read from the assembly's own metadata.
-        private static Type? Resolve(Assembly assembly, string typeName, out string? loadFailure)
+        // Tells three failures apart, each of which Assembly.GetType(name) alone reports as null: the runtime
+        // rejected the name itself; the assembly holds no type of that name; the type is there but could not be
+        // loaded (a dependency is missing, or is a build the type does not fit). The TypeLoadException thrown
+        // when asked names the requested type in the last two cases alike, so absence is read from the
+        // assembly's own metadata.
+        private static TypeResolution Resolve(Assembly assembly, string typeName)
         {
-            loadFailure = null;
+            // The runtime's parser skips leading whitespace but keeps it at the end of the name and before a
+            // generic argument list, then finds nothing. Say why instead of "not found".
+            if (typeName.Length > 0 && char.IsWhiteSpace(typeName[typeName.Length - 1]))
+            {
+                return TypeResolution.Rejected("the name ends in whitespace.");
+            }
+
+            int argumentsStart = typeName.IndexOf('[');
+            if (argumentsStart > 0 && char.IsWhiteSpace(typeName[argumentsStart - 1]))
+            {
+                return TypeResolution.Rejected("there is whitespace before the generic argument list.");
+            }
+
             try
             {
-                return assembly.GetType(typeName, true);
+                return TypeResolution.Found(assembly.GetType(typeName, true)!);
             }
-            catch (ArgumentException)
+            catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException)
             {
-                return null;
+                // Generic arguments on a type that is not generic, the wrong number of them, one that breaks a
+                // constraint, or a malformed name. The run goes on to the next service.
+                return TypeResolution.Rejected(ex.Message);
             }
             catch (Exception ex) when (IsLoadFailure(ex))
             {
                 if (ex is TypeLoadException && !DefinesType(assembly, typeName))
                 {
-                    return null;
+                    return TypeResolution.NotFound;
                 }
 
-                loadFailure = ex.Message;
-                return null;
+                return TypeResolution.Unloadable(ex.Message);
             }
         }
 
         // Whether the assembly file's type-definition table holds the type the name refers to (nested types
         // spelled Outer+Inner, as Assembly.GetType takes them). A closed generic name is matched on its
         // definition, the part before the first '[': the table holds IRepo`1, never IRepo`1[[System.String, ...]].
-        // Reads metadata only; loads nothing.
+        // Leading whitespace is dropped, as the runtime's parser drops it; Resolve has already refused whitespace
+        // at the end or before the '[', which the parser keeps. Reads metadata only; loads nothing.
         private static bool DefinesType(Assembly assembly, string typeName)
         {
             int argumentsStart = typeName.IndexOf('[');
-            string definitionName = (argumentsStart < 0 ? typeName : typeName.Substring(0, argumentsStart)).Trim();
+            string definitionName = (argumentsStart < 0 ? typeName : typeName.Substring(0, argumentsStart)).TrimStart();
             try
             {
                 using FileStream stream = new FileStream(assembly.Location, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -331,7 +344,7 @@ namespace Bam
                     // The row's own name is the tail of its full name: only a row that could match pays for
                     // the walk up its declaring types.
                     if (definitionName.EndsWith(reader.GetString(definition.Name), StringComparison.Ordinal)
-                        && FullNameOf(reader, definition) == definitionName)
+                        && FullNameOf(reader, definition, definitionName.Length) == definitionName)
                     {
                         return true;
                     }
@@ -346,13 +359,16 @@ namespace Bam
             }
         }
 
-        // Namespace.Outer+Inner for a type-definition row. The walk up the declaring types is a loop bounded
-        // by the number of rows, so it ends whatever the nesting table says (the runtime refuses to load an
-        // assembly whose nesting is cyclic, but this reads the file, not the loaded assembly).
-        private static string FullNameOf(MetadataReader reader, TypeDefinition definition)
+        // Namespace.Outer+Inner for a type-definition row, or null once the name being built is longer than
+        // maxLength: a longer full name can never match, so a deep chain of nested types (or one of long names)
+        // costs no more than the requested name's length. The walk up the declaring types is also bounded by the
+        // number of rows, so it ends whatever the nesting table says (the runtime refuses to load an assembly
+        // whose nesting is cyclic, but this reads the file, not the loaded assembly).
+        private static string? FullNameOf(MetadataReader reader, TypeDefinition definition, int maxLength)
         {
             string name = reader.GetString(definition.Name);
             TypeDefinition current = definition;
+            // The row's own name already fits: the caller only asks for rows whose name ends the requested one.
             for (int steps = reader.TypeDefinitions.Count; steps > 0; steps--)
             {
                 TypeDefinitionHandle declaring = current.GetDeclaringType();
@@ -362,11 +378,43 @@ namespace Bam
                 }
 
                 current = reader.GetTypeDefinition(declaring);
-                name = reader.GetString(current.Name) + "+" + name;
+                string declaringName = reader.GetString(current.Name);
+                if (declaringName.Length + 1 + name.Length > maxLength)
+                {
+                    return null;
+                }
+
+                name = declaringName + "+" + name;
             }
 
             string @namespace = reader.GetString(current.Namespace);
-            return @namespace.Length == 0 ? name : @namespace + "." + name;
+            string fullName = @namespace.Length == 0 ? name : @namespace + "." + name;
+            return fullName.Length > maxLength ? null : fullName;
+        }
+
+        // How a configured type name resolved: to a type, or to one of three reasons it did not.
+        private readonly record struct TypeResolution(Type? Type, string? LoadFailure, string? Rejection)
+        {
+            public static TypeResolution NotFound => new TypeResolution(null, null, null);
+
+            public static TypeResolution Found(Type type) => new TypeResolution(type, null, null);
+
+            public static TypeResolution Unloadable(string loadFailure) => new TypeResolution(null, loadFailure, null);
+
+            public static TypeResolution Rejected(string rejection) => new TypeResolution(null, null, rejection);
+
+            // The skip reason for a name that did not resolve; role is "interface" or "implementation".
+            public string Reason(string role, string typeName, Assembly assembly)
+            {
+                if (Rejection is not null)
+                {
+                    return $"{role} type '{typeName}' is not a type name the runtime accepts for assembly '{assembly.Location}': {Rejection}";
+                }
+
+                return LoadFailure is null
+                    ? $"{role} type '{typeName}' was not found in assembly '{assembly.Location}'."
+                    : $"{role} type '{typeName}' is in assembly '{assembly.Location}', but a dependency could not be loaded: {LoadFailure}";
+            }
         }
 
         // True for a type built on the decorator runtime's Decorator<T> (every generated decorator is). Compared
