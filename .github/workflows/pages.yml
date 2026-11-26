@@ -37,7 +37,7 @@ jobs:
 
       - name: Gather the Markdown
         env:
-          SITE: ${{ runner.temp }}/site
+          SITE: ${{ github.workspace }}/.pages-site
           REPO_NAME: ${{ github.event.repository.name }}
           REPO_FULL_NAME: ${{ github.repository }}
         run: |
@@ -66,7 +66,7 @@ jobs:
       - name: Build
         uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697 # v1.0.13
         with:
-          source: ${{ runner.temp }}/site
+          source: ./.pages-site
           destination: ./_site
 
       - name: Upload
