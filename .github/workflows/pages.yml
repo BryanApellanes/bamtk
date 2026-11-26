@@ -9,12 +9,22 @@ on:
     paths:
       - "**.md"
       - "**.markdown"
+      - "**.png"
+      - "**.jpg"
+      - "**.jpeg"
+      - "**.gif"
+      - "**.svg"
       - ".github/workflows/pages.yml"
   pull_request:
     branches: [ "bamtk" ]
     paths:
       - "**.md"
       - "**.markdown"
+      - "**.png"
+      - "**.jpg"
+      - "**.jpeg"
+      - "**.gif"
+      - "**.svg"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -28,6 +38,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -43,25 +54,54 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$SITE"
-          # Tracked files only; submodule contents are never part of this checkout.
-          git ls-files -z -- '*.md' '*.markdown' '*.png' '*.jpg' '*.jpeg' '*.gif' '*.svg' \
-            | xargs -0 -r cp --parents -t "$SITE" --
-          # Publish the Markdown as written: wrap each page in raw tags so template syntax in it
-          # (Handlebars, Liquid examples) is shown, not evaluated. Front matter, if any, stays first.
-          find "$SITE" -type f \( -name '*.md' -o -name '*.markdown' \) -print0 | while IFS= read -r -d '' f; do
-            awk 'BEGIN { fm = 0; opened = 0 }
-                 NR == 1 && $0 == "---" { fm = 1; print; next }
-                 fm == 1 { print; if ($0 == "---") { fm = 2; print "{% raw %}"; opened = 1 } ; next }
-                 NR == 1 { print "{% raw %}"; opened = 1 }
-                 { print }
-                 END { if (fm == 1) exit; if (!opened) print "{% raw %}"; print "{% endraw %}" }' "$f" > "$f.tmp"
+          # Tracked regular files only: submodule contents are not in this checkout, and a symlink is skipped
+          # rather than followed.
+          git ls-files -s -z -- ':(icase)*.md' ':(icase)*.markdown' ':(icase)*.png' ':(icase)*.jpg' \
+              ':(icase)*.jpeg' ':(icase)*.gif' ':(icase)*.svg' \
+            | while IFS= read -r -d '' entry; do
+                mode=${entry%% *}; path=${entry#*$'\t'}
+                case "$mode" in 100644|100755) ;; *) continue ;; esac
+                mkdir -p "$SITE/$(dirname -- "$path")"
+                cp -- "$path" "$SITE/$path"
+              done
+          find "$SITE" -type f \( -iname '*.md' -o -iname '*.markdown' \) -print0 | while IFS= read -r -d '' f; do
+            # A leading UTF-8 BOM would otherwise end up in front of the first heading.
+            sed -i '1s/^\xEF\xBB\xBF//' "$f"
+            # Pages with Liquid-like text ({{ or {%), such as Handlebars templates, are wrapped in raw tags so
+            # it is shown as written. Other pages are left alone. A page that itself contains an endraw tag
+            # closes the wrapper early and fails the build.
+            grep -qE '\{\{|\{%' "$f" || continue
+            awk -f - "$f" > "$f.tmp" <<'AWK'
+          function trim(s) { sub(/[ \t\r]+$/, "", s); return s }
+          function yq(s) { gsub(/'/, "''", s); return "'" s "'" }
+          { line[NR] = $0 }
+          END {
+            close_at = 0
+            if (NR > 0 && trim(line[1]) == "---")
+              for (i = 2; i <= NR; i++) { t = trim(line[i]); if (t == "---" || t == "...") { close_at = i; break } }
+            start = close_at + 1
+            title = ""; has_title = 0
+            for (i = 2; i < close_at; i++) if (line[i] ~ /^title[ \t]*:/) has_title = 1
+            for (i = start; i <= NR; i++) {
+              t = trim(line[i]); if (t == "") continue
+              if (t ~ /^#+[ \t]/) { title = t; sub(/^#+[ \t]+/, "", title); sub(/[ \t]+#+$/, "", title) }
+              break
+            }
+            if (close_at) {
+              for (i = 1; i < close_at; i++) print line[i]
+              if (!has_title && title != "") print "title: " yq(title)
+              print line[close_at]
+            } else if (title != "") {
+              print "---"; print "title: " yq(title); print "---"
+            }
+            print "{% raw %}"
+            for (i = start; i <= NR; i++) print line[i]
+            print "{% endraw %}"
+          }
+          AWK
             mv "$f.tmp" "$f"
           done
           printf 'title: %s\nrepository: %s\n' "$REPO_NAME" "$REPO_FULL_NAME" > "$SITE/_config.yml"
-
-      - name: Configure Pages
-        if: github.event_name != 'pull_request'
-        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - name: Build
         uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697 # v1.0.13
@@ -69,14 +109,17 @@ jobs:
           source: ./.pages-site
           destination: ./_site
 
+      # Also on pull requests, so the built pages can be downloaded and checked before merge. Nothing deploys
+      # from a pull request.
       - name: Upload
-        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
 
   deploy:
-    if: github.event_name != 'pull_request'
+    # Only the real branch deploys. The github-pages environment's branch policy enforces the same rule.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/bamtk'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       pages: write
       id-token: write
