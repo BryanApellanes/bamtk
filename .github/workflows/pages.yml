@@ -101,7 +101,18 @@ jobs:
           AWK
             mv "$f.tmp" "$f"
           done
-          printf 'title: %s\nrepository: %s\n' "$REPO_NAME" "$REPO_FULL_NAME" > "$SITE/_config.yml"
+          # The site title is the root README's opening heading (the one its page title is taken from), so the
+          # index page does not repeat it; failing that, the repository name.
+          title=""
+          if [ -f "$SITE/README.md" ]; then
+            title=$(awk 'NR == 1 && /^---[ \t\r]*$/ { fm = 1; next }
+                         fm { if ($0 ~ /^(---|\.\.\.)[ \t\r]*$/) fm = 0; next }
+                         /^[ \t\r]*$/ || /^\{% raw %\}[\r]?$/ { next }
+                         /^#+[ \t]/ { sub(/^#+[ \t]+/, ""); sub(/[ \t\r]+#*[ \t\r]*$/, ""); sub(/\r$/, ""); print }
+                         { exit }' "$SITE/README.md")
+          fi
+          [ -n "$title" ] || title=$REPO_NAME
+          printf "title: '%s'\nrepository: %s\n" "${title//\'/\'\'}" "$REPO_FULL_NAME" > "$SITE/_config.yml"
 
       - name: Build
         uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697 # v1.0.13
