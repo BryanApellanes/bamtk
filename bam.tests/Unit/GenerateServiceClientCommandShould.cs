@@ -205,10 +205,7 @@ namespace Bam.Tests.Unit
             // bamtk#133 item 2: a reference named \\.\pipe\<guid>, with pipe servers listening behind it and each
             // extension a probe might add, turns any open attempt into a connection. The control opens one pipe
             // directly, so a zero means the command opened nothing.
-            if (!PipeOracle.IsSupported)
-            {
-                return;
-            }
+            Skip.Unless(PipeOracle.IsSupported, "the named-pipe oracle needs Windows");
 
             string tag = Guid.NewGuid().ToString("N").Substring(0, 12);
             string root = TestOutputDir("pipe-" + tag);

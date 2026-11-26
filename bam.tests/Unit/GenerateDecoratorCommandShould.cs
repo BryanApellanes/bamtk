@@ -1255,10 +1255,7 @@ namespace Bam.Tests.Unit
             // probed. A reference named \\.\pipe\<guid> with pipe servers listening behind it (and behind each
             // extension a probe might add) turns any open attempt into a connection. The control opens one pipe
             // directly, so a zero means the command opened nothing, not that the oracle is blind.
-            if (!PipeOracle.IsSupported)
-            {
-                return;
-            }
+            Skip.Unless(PipeOracle.IsSupported, "the named-pipe oracle needs Windows");
 
             string root = TestOutputDir("pipe-reference");
             string tag = Guid.NewGuid().ToString("N").Substring(0, 12);
@@ -1344,39 +1341,72 @@ namespace Bam.Tests.Unit
         {
             // bamtk#133 item 5: IGen`1[System.String] has its argument outside the inner brackets, so it names no
             // assembly and is looked for in the target assembly alone. That used to read as "a dependency could
-            // not be loaded"; it is a rejected name. An unqualified argument the target does define still works,
-            // and the qualified spelling is never blamed on the argument.
+            // not be loaded"; it is a rejected name, one level down too. Names that fail for another reason (a
+            // qualified argument whose assembly is missing, an unqualified argument the target defines but cannot
+            // load, an array suffix) still report the dependency, and the good spellings are written. The
+            // dependency the target was compiled against is not beside it, so Broken cannot load.
             string root = TestOutputDir("unqualified-argument");
             string name = "Arg" + Guid.NewGuid().ToString("N").Substring(0, 8);
-            Directory.CreateDirectory(root);
-            string assemblyPath = Path.Combine(root, name + ".dll");
-            File.WriteAllBytes(assemblyPath, new RoslynCompiler().Compile(name,
+            string buildDir = Path.Combine(root, "build");
+            string serviceDir = Path.Combine(root, "svc");
+            Directory.CreateDirectory(buildDir);
+            Directory.CreateDirectory(serviceDir);
+            RoslynCompiler compiler = new RoslynCompiler();
+            string dependencyPath = Path.Combine(buildDir, name + "Dep.dll");
+            File.WriteAllBytes(dependencyPath, compiler.Compile(name + "Dep", "namespace " + name + "Dep { public interface IBase { } }"));
+            string assemblyPath = Path.Combine(serviceDir, name + ".dll");
+            File.WriteAllBytes(assemblyPath, compiler.Compile(name,
                 "namespace " + name + " {\n" +
                 "  public interface IGen<T> { T Get(); }\n" +
+                "  public interface IPick<T> { T Pick(); }\n" +
                 "  public class Local { }\n" +
-                "}\n"));
+                "  public class Other<T> { }\n" +
+                "  public class Broken : global::" + name + "Dep.IBase { }\n" +
+                "}\n",
+                () => compiler.MetadataReferenceResolver.GetMetaDataReferences()
+                    .Concat(new MetadataReference[] { MetadataReference.CreateFromFile(dependencyPath) })
+                    .ToArray()));
+            string missing = "Missing" + name;
+            string[] names = new string[]
+            {
+                name + ".IGen`1[System.String]",
+                name + ".IGen`1[" + name + ".Other`1[System.String]]",
+                name + ".IGen`1[" + name + ".Local]",
+                name + ".IPick`1[[System.String, System.Private.CoreLib]]",
+                name + ".IGen`1[[" + missing + ".Token, " + missing + "]]",
+                name + ".IGen`1[" + name + ".Broken]",
+                name + ".IGen`1[[" + missing + ".Token, " + missing + "]][]",
+            };
 
             After.Setup(reg =>
             {
                 reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
             })
-            .When<GenerateDecoratorCommand>("is given a closed generic whose argument names no assembly", command =>
+            .When<GenerateDecoratorCommand>("is given closed generics whose arguments are unqualified, nested, qualified, broken and arrays", command =>
             {
                 BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig { AssemblyPath = assemblyPath, OutputDirectory = Path.Combine(root, "out") };
-                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IGen`1[System.String]" });
-                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IGen`1[" + name + ".Local]" });
-                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IGen`1[[System.String, System.Private.CoreLib]]" });
+                foreach (string typeName in names)
+                {
+                    config.Services.Add(new DecoratorServiceConfig { Interface = typeName });
+                }
+
                 return command.Execute(config);
             })
             .TheTest
             .ShouldPass<DecoratorGenerationReport>((because, report) =>
             {
                 string skips = string.Join("; ", report.Skipped);
-                SkippedDecorator? unqualified = report.Skipped.FirstOrDefault(skip => skip.InterfaceName.EndsWith("IGen`1[System.String]", StringComparison.Ordinal));
-                because.ItsTrue("the unqualified argument is a rejected name", unqualified is not null && unqualified.Reason.Contains("not a type name the runtime accepts") && unqualified.Reason.Contains("names no assembly"), skips);
-                because.ItsTrue("not a dependency that could not be loaded", unqualified is not null && !unqualified.Reason.Contains("dependency could not be loaded"), skips);
-                because.ItsTrue("an unqualified argument the assembly defines is not blamed", report.Skipped.All(skip => !skip.InterfaceName.Contains(".Local]") || !skip.Reason.Contains("names no assembly")), skips);
-                because.ItsTrue("nor is the qualified spelling", report.Skipped.All(skip => !skip.InterfaceName.Contains("[[") || !skip.Reason.Contains("names no assembly")), skips);
+                SkippedDecorator? SkipOf(string typeName) => report.Skipped.FirstOrDefault(skip => skip.InterfaceName == typeName);
+                bool Blamed(string typeName) => SkipOf(typeName)?.Reason.Contains("names no assembly") == true;
+                bool Dependency(string typeName) => SkipOf(typeName)?.Reason.Contains("dependency could not be loaded") == true;
+
+                because.ItsTrue("the unqualified argument is a rejected name", SkipOf(names[0])?.Reason.Contains("not a type name the runtime accepts") == true && Blamed(names[0]) && !Dependency(names[0]), skips);
+                because.ItsTrue("so is one inside an argument the target defines", Blamed(names[1]) && SkipOf(names[1])!.Reason.Contains("'System.String'"), skips);
+                because.ItsTrue("an unqualified argument the target defines is written", SkipOf(names[2]) is null && report.Written.Count == 2, FileNames(report.Written) + " " + skips);
+                because.ItsTrue("and so is a qualified one", SkipOf(names[3]) is null, skips);
+                because.ItsTrue("a qualified argument whose assembly is missing is a dependency, not a bad name", Dependency(names[4]) && !Blamed(names[4]), skips);
+                because.ItsTrue("so is an unqualified argument the target defines but cannot load", Dependency(names[5]) && !Blamed(names[5]), skips);
+                because.ItsTrue("and an array suffix is not read as part of the argument list", SkipOf(names[6]) is not null && !Blamed(names[6]), skips);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -1408,7 +1438,12 @@ namespace Bam.Tests.Unit
                 TypeNameResolver.DefinesType(narrowPath, missing);
                 long narrow = GC.GetAllocatedBytesForCurrentThread() - before;
                 bool present = TypeNameResolver.DefinesType(widePath, typeName + ".T19999");
-                return new AllocationOutcome(inWide, present, wide, narrow);
+                // A name of 20,000 dots (bamtk#144 review nit 3): candidates were one substring per dot.
+                string dotted = typeName + "." + string.Join(".", Enumerable.Repeat("a", 20000));
+                before = GC.GetAllocatedBytesForCurrentThread();
+                TypeNameResolver.DefinesType(narrowPath, dotted);
+                long manyDots = GC.GetAllocatedBytesForCurrentThread() - before;
+                return new AllocationOutcome(inWide, present, wide, narrow, manyDots);
             })
             .TheTest
             .ShouldPass<AllocationOutcome>((because, outcome) =>
@@ -1416,6 +1451,7 @@ namespace Bam.Tests.Unit
                 because.ItsTrue("the missing name is not found", !outcome.MissingFound);
                 because.ItsTrue("a present one is", outcome.PresentFound);
                 because.ItsTrue("the wide table costs about what the narrow one does", outcome.WideBytes < outcome.NarrowBytes + 64 * 1024, $"wide: {outcome.WideBytes} bytes, narrow: {outcome.NarrowBytes} bytes");
+                because.ItsTrue("and a name of many dots costs a few copies of the name, not one per dot", outcome.ManyDotsBytes < 4 * 1024 * 1024, $"many dots: {outcome.ManyDotsBytes} bytes");
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -1578,6 +1614,6 @@ namespace Bam.Tests.Unit
 
         private sealed record UnreadableOutcome(DecoratorGenerationReport? Report, Exception? Thrown);
 
-        private sealed record AllocationOutcome(bool MissingFound, bool PresentFound, long WideBytes, long NarrowBytes);
+        private sealed record AllocationOutcome(bool MissingFound, bool PresentFound, long WideBytes, long NarrowBytes, long ManyDotsBytes);
     }
 }

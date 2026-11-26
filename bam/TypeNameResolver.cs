@@ -84,8 +84,10 @@ namespace Bam
         /// <param name="assemblyPath">Path to the assembly file.</param>
         /// <param name="typeName">The type name, as <see cref="Assembly.GetType(string)"/> takes it.</param>
         /// <returns>True when the file defines the type; false when it does not or cannot be read.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="assemblyPath"/> or <paramref name="typeName"/> is null.</exception>
         public static bool DefinesType(string assemblyPath, string typeName)
         {
+            ArgumentNullException.ThrowIfNull(assemblyPath);
             ArgumentNullException.ThrowIfNull(typeName);
 
             int argumentsStart = typeName.IndexOf('[');
@@ -133,10 +135,15 @@ namespace Bam
                 || ex is ReflectionTypeLoadException;
         }
 
+        // How many of the last dots in a top-level name are tried as the namespace/name split. A type's own name
+        // holding a dot is rare, and one holding this many is not worth a candidate each.
+        private const int MaxNameDots = 8;
+
         // The names a type-definition row would carry if it were the one requested: after the last '+' for a
-        // nested type; for a top-level type the name after any '.', since the namespace/name split is not
-        // knowable from the full name alone (a name may itself hold a '.'). A handful of strings per request,
-        // allocated once, instead of one per row.
+        // nested type; for a top-level type the name after one of its last dots (or the whole name), since the
+        // namespace/name split is not knowable from the full name alone (a name may itself hold a '.'). At most
+        // MaxNameDots + 1 strings per request, allocated once, instead of one per row; a name with thousands of
+        // dots costs no more than one with nine.
         private static string[] CandidateRowNames(string definitionName)
         {
             int nested = definitionName.LastIndexOf('+');
@@ -145,9 +152,17 @@ namespace Bam
                 return new string[] { definitionName.Substring(nested + 1) };
             }
 
-            List<string> names = new List<string> { definitionName };
-            for (int dot = definitionName.IndexOf('.'); dot >= 0; dot = definitionName.IndexOf('.', dot + 1))
+            List<string> names = new List<string>();
+            int dot = definitionName.Length;
+            for (int found = 0; found < MaxNameDots; found++)
             {
+                dot = dot == 0 ? -1 : definitionName.LastIndexOf('.', dot - 1);
+                if (dot < 0)
+                {
+                    names.Add(definitionName);
+                    break;
+                }
+
                 names.Add(definitionName.Substring(dot + 1));
             }
 
@@ -199,14 +214,20 @@ namespace Bam
             return fullName.Length > maxLength ? null : fullName;
         }
 
-        // The first top-level generic argument of typeName that names no assembly and that the assembly does not
-        // define, or null when there is none. Such an argument is the reason the name failed to load, provided
-        // the generic definition itself loads; when it does not, the definition's failure is the one to report.
-        private static string? UnresolvedUnqualifiedArgument(Assembly assembly, string typeName)
+        // How deep UnresolvedUnqualifiedArgument follows generic arguments that are themselves closed generics.
+        private const int MaxArgumentDepth = 16;
+
+        // The first generic argument of typeName that names no assembly and that the assembly does not define, or
+        // null when there is none. Such an argument is the reason the name failed to load, provided each generic
+        // definition on the way to it loads; when one does not, that definition's failure is the one to report.
+        // An unqualified argument the assembly does define is followed into its own arguments
+        // (IGen`1[Svc.Other`1[System.String]]); a qualified one ([[X, Asm]]) is never blamed or followed, since
+        // its assembly, not the target, is where it is looked for.
+        private static string? UnresolvedUnqualifiedArgument(Assembly assembly, string typeName, int depth = 0)
         {
             int open = typeName.IndexOf('[');
-            int close = typeName.LastIndexOf(']');
-            if (open < 0 || close <= open)
+            int close = MatchingBracket(typeName, open);
+            if (open < 0 || close < 0 || depth >= MaxArgumentDepth)
             {
                 return null;
             }
@@ -231,13 +252,49 @@ namespace Bam
                     unwrapped = unwrapped.Substring(1, unwrapped.Length - 2).Trim();
                 }
 
-                if (TopLevelArguments(unwrapped).Count == 1 && !DefinesType(assembly.Location, unwrapped))
+                if (TopLevelArguments(unwrapped).Count != 1)
+                {
+                    continue;
+                }
+
+                if (!DefinesType(assembly.Location, unwrapped))
                 {
                     return unwrapped;
+                }
+
+                string? inner = UnresolvedUnqualifiedArgument(assembly, unwrapped, depth + 1);
+                if (inner is not null)
+                {
+                    return inner;
                 }
             }
 
             return null;
+        }
+
+        // The index of the ']' that closes the '[' at open, or -1. A trailing array suffix ("[]") after the
+        // argument list is not part of it.
+        private static int MatchingBracket(string name, int open)
+        {
+            if (open < 0)
+            {
+                return -1;
+            }
+
+            int depth = 0;
+            for (int i = open; i < name.Length; i++)
+            {
+                if (name[i] == '[')
+                {
+                    depth++;
+                }
+                else if (name[i] == ']' && --depth == 0)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         // Splits a bracketed argument list on the commas outside any nested brackets.
@@ -282,9 +339,6 @@ namespace Bam
         /// <summary>Gets the outcome for a name the assembly does not define.</summary>
         public static TypeResolution NotFound => new TypeResolution(null, null, null);
 
-        /// <summary>Gets a value indicating whether the name resolved to a type.</summary>
-        public bool IsFound => Type is not null;
-
         /// <summary>Creates the outcome for a name that resolved.</summary>
         /// <param name="type">The type.</param>
         /// <returns>The outcome.</returns>
@@ -307,8 +361,14 @@ namespace Bam
         /// <param name="typeName">The name as configured.</param>
         /// <param name="assembly">The assembly it was looked for in.</param>
         /// <returns>The reason, starting with <paramref name="role"/>.</returns>
+        /// <exception cref="InvalidOperationException">The name resolved; there is no reason to give.</exception>
         public string Reason(string role, string typeName, Assembly assembly)
         {
+            if (Type is not null)
+            {
+                throw new InvalidOperationException($"{role} type '{typeName}' resolved; there is no reason it did not.");
+            }
+
             if (Rejection is not null)
             {
                 return $"{role} type '{typeName}' is not a type name the runtime accepts for assembly '{assembly.Location}': {Rejection}";

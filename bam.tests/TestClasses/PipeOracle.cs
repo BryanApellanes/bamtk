@@ -44,10 +44,11 @@ namespace Bam.Tests.TestClasses
         public string Path => @"\\.\pipe\" + Name;
 
         /// <summary>
-        /// Gets the number of watched pipes that saw a connection, after giving a connection already under way
-        /// <paramref name="settle"/> to register.
+        /// Gets the number of watched pipes that saw a connection, after waiting up to <paramref name="settle"/>
+        /// for the first one. Returns as soon as any pipe connects, so a control that expects a connection does
+        /// not sleep out the whole wait; an oracle that expects none waits the full <paramref name="settle"/>.
         /// </summary>
-        /// <param name="settle">How long to wait for a pending connection.</param>
+        /// <param name="settle">How long to wait for a first connection.</param>
         /// <returns>The count of pipes opened.</returns>
         public int Connections(TimeSpan settle)
         {
@@ -56,7 +57,7 @@ namespace Bam.Tests.TestClasses
                 return 0;
             }
 
-            Task.WhenAny(Task.WhenAll(_waits), Task.Delay(settle)).Wait();
+            Task.WhenAny(Task.WhenAny(_waits), Task.Delay(settle)).Wait();
             return _waits.Count(wait => wait.Status == TaskStatus.RanToCompletion);
         }
 
