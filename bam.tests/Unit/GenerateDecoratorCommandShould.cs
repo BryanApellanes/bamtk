@@ -1248,6 +1248,223 @@ namespace Bam.Tests.Unit
             .UnlessItFailed();
         }
 
+        [UnitTest(RunSynchronously = true)]
+        public void NotOpenAReferenceNamedAPipe()
+        {
+            // bamtk#133 item 2: "nothing outside was loaded" cannot see an open that failed or a file that was only
+            // probed. A reference named \\.\pipe\<guid> with pipe servers listening behind it (and behind each
+            // extension a probe might add) turns any open attempt into a connection. The control opens one pipe
+            // directly, so a zero means the command opened nothing, not that the oracle is blind.
+            if (!PipeOracle.IsSupported)
+            {
+                return;
+            }
+
+            string root = TestOutputDir("pipe-reference");
+            string tag = Guid.NewGuid().ToString("N").Substring(0, 12);
+            string outside = Path.Combine(root, "outside");
+            string serviceDir = Path.Combine(root, "svc");
+            string buildDir = Path.Combine(root, "build");
+            Directory.CreateDirectory(outside);
+            Directory.CreateDirectory(serviceDir);
+            Directory.CreateDirectory(buildDir);
+            using PipeOracle oracle = new PipeOracle("bamtk133" + tag);
+            using PipeOracle control = new PipeOracle("bamtk133control" + tag);
+            CompiledService service = CompileEscapingService(buildDir, serviceDir, outside, "Pipe" + tag, oracle.Path);
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("decorates a service whose dependency's reference name is a pipe", command =>
+            {
+                BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig { OutputDirectory = Path.Combine(root, "out") };
+                config.Services.Add(new DecoratorServiceConfig { AssemblyPath = service.ServicePath, Interface = service.InterfaceName, Implementation = service.ImplementationName });
+                DecoratorGenerationReport report = command.Execute(config);
+                File.Exists(control.Path);
+                return new PipeOutcome(report, oracle.Connections(TimeSpan.FromMilliseconds(500)), control.Connections(TimeSpan.FromSeconds(5)));
+            })
+            .TheTest
+            .ShouldPass<PipeOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("the control proves an open is seen", outcome.ControlConnections > 0, $"control connections: {outcome.ControlConnections}");
+                because.ItsTrue("the command opened no pipe", outcome.Connections == 0, $"connections: {outcome.Connections}");
+                because.ItsTrue("and skipped the service as one whose dependency could not be loaded", outcome.Report.Written.Count == 0 && outcome.Report.Skipped.Count == 1 && outcome.Report.Skipped[0].Reason.Contains("could not be loaded"), string.Join("; ", outcome.Report.Skipped));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void SkipAnAssemblyWhoseTypesCannotBeReadAndCarryOn()
+        {
+            // bamtk#133 item 1: an exported type forwarded to a module (File table) that is not there makes
+            // GetTypes throw a plain load failure rather than ReflectionTypeLoadException, which used to end the
+            // run. It is now one skip, after the listed service has been written.
+            string root = TestOutputDir("unreadable-types");
+            string name = "Mod" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            Directory.CreateDirectory(root);
+            string assemblyPath = Path.Combine(root, name + ".dll");
+            WriteAssemblyExportingFromAMissingModule(assemblyPath, name);
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("discovers services in an assembly whose types cannot be read", command =>
+            {
+                BamDecoratorGenerationConfig config = ListConfig(Path.Combine(root, "out"), Pair(typeof(IGreetingService), typeof(GreetingService)));
+                config.Discover = new DecoratorDiscoveryConfig { AssemblyPath = assemblyPath };
+                Exception? thrown = null;
+                DecoratorGenerationReport? report = null;
+                try
+                {
+                    report = command.Execute(config);
+                }
+                catch (Exception ex)
+                {
+                    thrown = ex;
+                }
+
+                return new UnreadableOutcome(report, thrown);
+            })
+            .TheTest
+            .ShouldPass<UnreadableOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("the run does not end", outcome.Thrown is null, outcome.Thrown?.ToString());
+                because.ItsTrue("the listed service is written", outcome.Report?.Written.Count == 1, outcome.Report is null ? "no report" : FileNames(outcome.Report.Written));
+                because.ItsTrue("and the assembly is one skip saying it was not scanned", outcome.Report?.Skipped.Count == 1 && outcome.Report.Skipped[0].Reason.Contains("not scanned"), outcome.Report is null ? "no report" : string.Join("; ", outcome.Report.Skipped));
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void RejectAGenericArgumentThatNamesNoAssembly()
+        {
+            // bamtk#133 item 5: IGen`1[System.String] has its argument outside the inner brackets, so it names no
+            // assembly and is looked for in the target assembly alone. That used to read as "a dependency could
+            // not be loaded"; it is a rejected name. An unqualified argument the target does define still works,
+            // and the qualified spelling is never blamed on the argument.
+            string root = TestOutputDir("unqualified-argument");
+            string name = "Arg" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            Directory.CreateDirectory(root);
+            string assemblyPath = Path.Combine(root, name + ".dll");
+            File.WriteAllBytes(assemblyPath, new RoslynCompiler().Compile(name,
+                "namespace " + name + " {\n" +
+                "  public interface IGen<T> { T Get(); }\n" +
+                "  public class Local { }\n" +
+                "}\n"));
+
+            After.Setup(reg =>
+            {
+                reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
+            })
+            .When<GenerateDecoratorCommand>("is given a closed generic whose argument names no assembly", command =>
+            {
+                BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig { AssemblyPath = assemblyPath, OutputDirectory = Path.Combine(root, "out") };
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IGen`1[System.String]" });
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IGen`1[" + name + ".Local]" });
+                config.Services.Add(new DecoratorServiceConfig { Interface = name + ".IGen`1[[System.String, System.Private.CoreLib]]" });
+                return command.Execute(config);
+            })
+            .TheTest
+            .ShouldPass<DecoratorGenerationReport>((because, report) =>
+            {
+                string skips = string.Join("; ", report.Skipped);
+                SkippedDecorator? unqualified = report.Skipped.FirstOrDefault(skip => skip.InterfaceName.EndsWith("IGen`1[System.String]", StringComparison.Ordinal));
+                because.ItsTrue("the unqualified argument is a rejected name", unqualified is not null && unqualified.Reason.Contains("not a type name the runtime accepts") && unqualified.Reason.Contains("names no assembly"), skips);
+                because.ItsTrue("not a dependency that could not be loaded", unqualified is not null && !unqualified.Reason.Contains("dependency could not be loaded"), skips);
+                because.ItsTrue("an unqualified argument the assembly defines is not blamed", report.Skipped.All(skip => !skip.InterfaceName.Contains(".Local]") || !skip.Reason.Contains("names no assembly")), skips);
+                because.ItsTrue("nor is the qualified spelling", report.Skipped.All(skip => !skip.InterfaceName.Contains("[[") || !skip.Reason.Contains("names no assembly")), skips);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void LookForAMissingNameWithoutAllocatingPerRow()
+        {
+            // bamtk#133 item 4: telling "not found" from "cannot be loaded" walks the assembly's type table. It
+            // used to build a string for every row's name; rows are now compared in the string heap, so a miss
+            // in a large table allocates about what a miss in a small one does.
+            string root = TestOutputDir("allocation-free-miss");
+            string name = "Wide" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            Directory.CreateDirectory(root);
+            string widePath = Path.Combine(root, name + ".dll");
+            WriteWideAssembly(widePath, name, 20000);
+            string narrowPath = Path.Combine(root, name + "Narrow.dll");
+            WriteWideAssembly(narrowPath, name + "Narrow", 1);
+
+            When.A<string>("looks for a name neither assembly defines", name, typeName =>
+            {
+                string missing = typeName + ".Nowhere.Missing";
+                TypeNameResolver.DefinesType(widePath, missing);
+                TypeNameResolver.DefinesType(narrowPath, missing);
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                bool inWide = TypeNameResolver.DefinesType(widePath, missing);
+                long wide = GC.GetAllocatedBytesForCurrentThread() - before;
+                before = GC.GetAllocatedBytesForCurrentThread();
+                TypeNameResolver.DefinesType(narrowPath, missing);
+                long narrow = GC.GetAllocatedBytesForCurrentThread() - before;
+                bool present = TypeNameResolver.DefinesType(widePath, typeName + ".T19999");
+                return new AllocationOutcome(inWide, present, wide, narrow);
+            })
+            .TheTest
+            .ShouldPass<AllocationOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("the missing name is not found", !outcome.MissingFound);
+                because.ItsTrue("a present one is", outcome.PresentFound);
+                because.ItsTrue("the wide table costs about what the narrow one does", outcome.WideBytes < outcome.NarrowBytes + 64 * 1024, $"wide: {outcome.WideBytes} bytes, narrow: {outcome.NarrowBytes} bytes");
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        // An assembly {name} holding {name}.T0 .. T{count-1}, empty public interfaces, and nothing else.
+        private static void WriteWideAssembly(string path, string name, int count)
+        {
+            System.Reflection.Metadata.Ecma335.MetadataBuilder metadata = new System.Reflection.Metadata.Ecma335.MetadataBuilder();
+            metadata.AddModule(0, metadata.GetOrAddString(name + ".dll"), metadata.GetOrAddGuid(Guid.NewGuid()), default(System.Reflection.Metadata.GuidHandle), default(System.Reflection.Metadata.GuidHandle));
+            metadata.AddAssembly(metadata.GetOrAddString(name), new Version(1, 0, 0, 0), default(System.Reflection.Metadata.StringHandle), default(System.Reflection.Metadata.BlobHandle), default(System.Reflection.AssemblyFlags), System.Reflection.AssemblyHashAlgorithm.Sha1);
+            System.Reflection.Metadata.FieldDefinitionHandle fields = System.Reflection.Metadata.Ecma335.MetadataTokens.FieldDefinitionHandle(1);
+            System.Reflection.Metadata.MethodDefinitionHandle methods = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(1);
+            metadata.AddTypeDefinition(default(System.Reflection.TypeAttributes), default(System.Reflection.Metadata.StringHandle), metadata.GetOrAddString("<Module>"), default(System.Reflection.Metadata.EntityHandle), fields, methods);
+            System.Reflection.Metadata.StringHandle @namespace = metadata.GetOrAddString(name);
+            for (int i = 0; i < count; i++)
+            {
+                metadata.AddTypeDefinition(System.Reflection.TypeAttributes.Public | System.Reflection.TypeAttributes.Abstract | System.Reflection.TypeAttributes.Interface, @namespace, metadata.GetOrAddString("T" + i), default(System.Reflection.Metadata.EntityHandle), fields, methods);
+            }
+
+            SerializeLibrary(path, metadata);
+        }
+
+        // An assembly {name} whose manifest exports {name}.IMissing from {name}.netmodule, a module listed in its
+        // File table and never written, so reading its types fails as a whole.
+        private static void WriteAssemblyExportingFromAMissingModule(string path, string name)
+        {
+            System.Reflection.Metadata.Ecma335.MetadataBuilder metadata = new System.Reflection.Metadata.Ecma335.MetadataBuilder();
+            metadata.AddModule(0, metadata.GetOrAddString(name + ".dll"), metadata.GetOrAddGuid(Guid.NewGuid()), default(System.Reflection.Metadata.GuidHandle), default(System.Reflection.Metadata.GuidHandle));
+            metadata.AddAssembly(metadata.GetOrAddString(name), new Version(1, 0, 0, 0), default(System.Reflection.Metadata.StringHandle), default(System.Reflection.Metadata.BlobHandle), default(System.Reflection.AssemblyFlags), System.Reflection.AssemblyHashAlgorithm.Sha1);
+            System.Reflection.Metadata.FieldDefinitionHandle fields = System.Reflection.Metadata.Ecma335.MetadataTokens.FieldDefinitionHandle(1);
+            System.Reflection.Metadata.MethodDefinitionHandle methods = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(1);
+            metadata.AddTypeDefinition(default(System.Reflection.TypeAttributes), default(System.Reflection.Metadata.StringHandle), metadata.GetOrAddString("<Module>"), default(System.Reflection.Metadata.EntityHandle), fields, methods);
+            System.Reflection.Metadata.AssemblyFileHandle module = metadata.AddAssemblyFile(metadata.GetOrAddString(name + ".netmodule"), metadata.GetOrAddBlob(new byte[20]), true);
+            metadata.AddExportedType(System.Reflection.TypeAttributes.Public | System.Reflection.TypeAttributes.Interface | System.Reflection.TypeAttributes.Abstract, metadata.GetOrAddString(name), metadata.GetOrAddString("IMissing"), module, 0);
+            SerializeLibrary(path, metadata);
+        }
+
+        private static void SerializeLibrary(string path, System.Reflection.Metadata.Ecma335.MetadataBuilder metadata)
+        {
+            System.Reflection.PortableExecutable.ManagedPEBuilder pe = new System.Reflection.PortableExecutable.ManagedPEBuilder(
+                System.Reflection.PortableExecutable.PEHeaderBuilder.CreateLibraryHeader(),
+                new System.Reflection.Metadata.Ecma335.MetadataRootBuilder(metadata),
+                new System.Reflection.Metadata.BlobBuilder());
+            System.Reflection.Metadata.BlobBuilder image = new System.Reflection.Metadata.BlobBuilder();
+            pe.Serialize(image);
+            File.WriteAllBytes(path, image.ToArray());
+        }
+
         // Compiles {name}Svc.dll (IWidget, and a Widget that also implements a dependency's IBase) into serviceDir
         // against a dependency whose simple name is as long as reference, then rewrites that name in the
         // service's metadata to reference. A dependency the rewritten name points at is written under outside,
@@ -1356,5 +1573,11 @@ namespace Bam.Tests.Unit
         private sealed record BareNameOutcome(bool BareAccepted, string[] PathsAccepted);
 
         private sealed record EscapeOutcome(DecoratorGenerationReport Report, string[] LoadedFromOutside);
+
+        private sealed record PipeOutcome(DecoratorGenerationReport Report, int Connections, int ControlConnections);
+
+        private sealed record UnreadableOutcome(DecoratorGenerationReport? Report, Exception? Thrown);
+
+        private sealed record AllocationOutcome(bool MissingFound, bool PresentFound, long WideBytes, long NarrowBytes);
     }
 }
