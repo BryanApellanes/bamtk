@@ -37,8 +37,7 @@ namespace Bam
                 return TypeResolution.Rejected("the name ends in whitespace.");
             }
 
-            int argumentsStart = typeName.IndexOf('[');
-            if (argumentsStart > 0 && char.IsWhiteSpace(typeName[argumentsStart - 1]))
+            if (HasWhitespaceBeforeBracket(typeName))
             {
                 return TypeResolution.Rejected("there is whitespace before '['.");
             }
@@ -73,13 +72,41 @@ namespace Bam
             }
         }
 
+        // Whitespace between a name and the '[' that opens its argument list or array suffix, at any depth
+        // (IGen`1[Svc.Other`1 [System.String]]). The runtime keeps it as part of the name and then finds nothing.
+        // Whitespace after ',' or '[' (IPair`2[[A, X], [B, Y]]) separates arguments and is not reported.
+        private static bool HasWhitespaceBeforeBracket(string typeName)
+        {
+            for (int i = 1; i < typeName.Length; i++)
+            {
+                if (typeName[i] != '[' || !char.IsWhiteSpace(typeName[i - 1]))
+                {
+                    continue;
+                }
+
+                int previous = i - 1;
+                while (previous >= 0 && char.IsWhiteSpace(typeName[previous]))
+                {
+                    previous--;
+                }
+
+                if (previous >= 0 && typeName[previous] != ',' && typeName[previous] != '[')
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Whether the type-definition table of the assembly file at <paramref name="assemblyPath"/> holds the type
         /// <paramref name="typeName"/> refers to. A closed generic name is matched on its definition, the part
         /// before the first <c>[</c>: the table holds <c>IRepo`1</c>, never <c>IRepo`1[[System.String, ...]]</c>.
         /// Leading whitespace is dropped, as the runtime's parser drops it. Reads metadata only and loads
         /// nothing; a row's name is compared in place in the string heap, so a row that cannot match costs no
-        /// allocation (bamtk#133).
+        /// allocation (bamtk#133). A type in a namespace is found when its own name holds at most seven dots
+        /// (no C# compiler emits one with any); a type with no namespace is found whatever its name holds.
         /// </summary>
         /// <param name="assemblyPath">Path to the assembly file.</param>
         /// <param name="typeName">The type name, as <see cref="Assembly.GetType(string)"/> takes it.</param>
@@ -140,10 +167,10 @@ namespace Bam
         private const int MaxNameDots = 8;
 
         // The names a type-definition row would carry if it were the one requested: after the last '+' for a
-        // nested type; for a top-level type the name after one of its last dots (or the whole name), since the
-        // namespace/name split is not knowable from the full name alone (a name may itself hold a '.'). At most
-        // MaxNameDots + 1 strings per request, allocated once, instead of one per row; a name with thousands of
-        // dots costs no more than one with nine.
+        // nested type; for a top-level type the name after each of its last MaxNameDots dots, and the whole name
+        // (a type with no namespace), since the namespace/name split is not knowable from the full name alone (a
+        // name may itself hold a '.'). At most MaxNameDots + 1 strings per request, allocated once, instead of one
+        // per row; a name with thousands of dots costs no more than one with nine.
         private static string[] CandidateRowNames(string definitionName)
         {
             int nested = definitionName.LastIndexOf('+');
@@ -159,13 +186,13 @@ namespace Bam
                 dot = dot == 0 ? -1 : definitionName.LastIndexOf('.', dot - 1);
                 if (dot < 0)
                 {
-                    names.Add(definitionName);
                     break;
                 }
 
                 names.Add(definitionName.Substring(dot + 1));
             }
 
+            names.Add(definitionName);
             return names.ToArray();
         }
 
@@ -222,12 +249,13 @@ namespace Bam
         // definition on the way to it loads; when one does not, that definition's failure is the one to report.
         // An unqualified argument the assembly does define is followed into its own arguments
         // (IGen`1[Svc.Other`1[System.String]]); a qualified one ([[X, Asm]]) is never blamed or followed, since
-        // its assembly, not the target, is where it is looked for.
+        // its assembly, not the target, is where it is looked for. An array of a type the target defines
+        // (Svc.Local[]) has no argument list to follow: its brackets hold a rank.
         private static string? UnresolvedUnqualifiedArgument(Assembly assembly, string typeName, int depth = 0)
         {
             int open = typeName.IndexOf('[');
             int close = MatchingBracket(typeName, open);
-            if (open < 0 || close < 0 || depth >= MaxArgumentDepth)
+            if (open < 0 || close < 0 || depth >= MaxArgumentDepth || IsArrayRank(typeName.Substring(open + 1, close - open - 1)))
             {
                 return null;
             }
@@ -270,6 +298,20 @@ namespace Bam
             }
 
             return null;
+        }
+
+        // Whether bracketed text is an array rank ("", ",", "*") rather than a generic argument list.
+        private static bool IsArrayRank(string bracketed)
+        {
+            foreach (char c in bracketed)
+            {
+                if (c != ',' && c != '*' && !char.IsWhiteSpace(c))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         // The index of the ']' that closes the '[' at open, or -1. A trailing array suffix ("[]") after the

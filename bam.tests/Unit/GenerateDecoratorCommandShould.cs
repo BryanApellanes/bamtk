@@ -1344,7 +1344,9 @@ namespace Bam.Tests.Unit
             // not be loaded"; it is a rejected name, one level down too. Names that fail for another reason (a
             // qualified argument whose assembly is missing, an unqualified argument the target defines but cannot
             // load, an array suffix) still report the dependency, and the good spellings are written. The
-            // dependency the target was compiled against is not beside it, so Broken cannot load.
+            // dependency the target was compiled against is not beside it, so Broken cannot load. An array of a
+            // type the target defines (Local[]) is not followed into its "[]", and whitespace before a nested '['
+            // is reported as such rather than blamed on the argument.
             string root = TestOutputDir("unqualified-argument");
             string name = "Arg" + Guid.NewGuid().ToString("N").Substring(0, 8);
             string buildDir = Path.Combine(root, "build");
@@ -1359,6 +1361,7 @@ namespace Bam.Tests.Unit
                 "namespace " + name + " {\n" +
                 "  public interface IGen<T> { T Get(); }\n" +
                 "  public interface IPick<T> { T Pick(); }\n" +
+                "  public interface IPair<A, B> { A First(); B Second(); }\n" +
                 "  public class Local { }\n" +
                 "  public class Other<T> { }\n" +
                 "  public class Broken : global::" + name + "Dep.IBase { }\n" +
@@ -1376,13 +1379,15 @@ namespace Bam.Tests.Unit
                 name + ".IGen`1[[" + missing + ".Token, " + missing + "]]",
                 name + ".IGen`1[" + name + ".Broken]",
                 name + ".IGen`1[[" + missing + ".Token, " + missing + "]][]",
+                name + ".IPair`2[" + name + ".Local[],[" + missing + ".Token, " + missing + "]]",
+                name + ".IGen`1[" + name + ".Other`1 [System.String]]",
             };
 
             After.Setup(reg =>
             {
                 reg.For<GenerateDecoratorCommand>().Use(new GenerateDecoratorCommand());
             })
-            .When<GenerateDecoratorCommand>("is given closed generics whose arguments are unqualified, nested, qualified, broken and arrays", command =>
+            .When<GenerateDecoratorCommand>("is given closed generics whose arguments are unqualified, nested, qualified, broken, arrays and spaced", command =>
             {
                 BamDecoratorGenerationConfig config = new BamDecoratorGenerationConfig { AssemblyPath = assemblyPath, OutputDirectory = Path.Combine(root, "out") };
                 foreach (string typeName in names)
@@ -1406,7 +1411,9 @@ namespace Bam.Tests.Unit
                 because.ItsTrue("and so is a qualified one", SkipOf(names[3]) is null, skips);
                 because.ItsTrue("a qualified argument whose assembly is missing is a dependency, not a bad name", Dependency(names[4]) && !Blamed(names[4]), skips);
                 because.ItsTrue("so is an unqualified argument the target defines but cannot load", Dependency(names[5]) && !Blamed(names[5]), skips);
-                because.ItsTrue("and an array suffix is not read as part of the argument list", SkipOf(names[6]) is not null && !Blamed(names[6]), skips);
+                because.ItsTrue("and an array suffix is not read as part of the argument list", Dependency(names[6]) && !Blamed(names[6]), skips);
+                because.ItsTrue("nor is an array of a type the target defines followed into its rank", Dependency(names[7]) && !Blamed(names[7]), skips);
+                because.ItsTrue("whitespace before a nested '[' is reported as such", SkipOf(names[8])?.Reason.Contains("whitespace before '['") == true && !Blamed(names[8]), skips);
             })
             .SoBeHappy()
             .UnlessItFailed();
