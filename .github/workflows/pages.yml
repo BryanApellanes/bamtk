@@ -39,6 +39,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      # jekyll-build-pages reads this repo's Pages settings to set the site's base URL (/<repo>/)
+      pages: read
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
