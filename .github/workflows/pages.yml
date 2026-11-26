@@ -1,0 +1,89 @@
+# Publishes this repository's README.md as its GitHub Pages site (BryanApellanes/threeheadz-tracker#38).
+# The root README.md becomes the index page; the repository's other Markdown files are published next to it, so
+# relative links between docs keep working. Submodules are not checked out.
+name: pages
+
+on:
+  push:
+    branches: [ "bamtk" ]
+    paths:
+      - "**.md"
+      - "**.markdown"
+      - ".github/workflows/pages.yml"
+  pull_request:
+    branches: [ "bamtk" ]
+    paths:
+      - "**.md"
+      - "**.markdown"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          persist-credentials: false
+
+      - name: Gather the Markdown
+        env:
+          SITE: ${{ runner.temp }}/site
+          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_FULL_NAME: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$SITE"
+          # Tracked files only; submodule contents are never part of this checkout.
+          git ls-files -z -- '*.md' '*.markdown' '*.png' '*.jpg' '*.jpeg' '*.gif' '*.svg' \
+            | xargs -0 -r cp --parents -t "$SITE" --
+          # Publish the Markdown as written: wrap each page in raw tags so template syntax in it
+          # (Handlebars, Liquid examples) is shown, not evaluated. Front matter, if any, stays first.
+          find "$SITE" -type f \( -name '*.md' -o -name '*.markdown' \) -print0 | while IFS= read -r -d '' f; do
+            awk 'BEGIN { fm = 0; opened = 0 }
+                 NR == 1 && $0 == "---" { fm = 1; print; next }
+                 fm == 1 { print; if ($0 == "---") { fm = 2; print "{% raw %}"; opened = 1 } ; next }
+                 NR == 1 { print "{% raw %}"; opened = 1 }
+                 { print }
+                 END { if (fm == 1) exit; if (!opened) print "{% raw %}"; print "{% endraw %}" }' "$f" > "$f.tmp"
+            mv "$f.tmp" "$f"
+          done
+          printf 'title: %s\nrepository: %s\n' "$REPO_NAME" "$REPO_FULL_NAME" > "$SITE/_config.yml"
+
+      - name: Configure Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Build
+        uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697 # v1.0.13
+        with:
+          source: ${{ runner.temp }}/site
+          destination: ./_site
+
+      - name: Upload
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
