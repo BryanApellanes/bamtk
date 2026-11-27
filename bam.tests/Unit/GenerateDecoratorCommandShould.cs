@@ -1362,6 +1362,7 @@ namespace Bam.Tests.Unit
                 "  public interface IGen<T> { T Get(); }\n" +
                 "  public interface IPick<T> { T Pick(); }\n" +
                 "  public interface IPair<A, B> { A First(); B Second(); }\n" +
+                "  public interface IHold<T> { T Hold(); }\n" +
                 "  public class Local { }\n" +
                 "  public class Other<T> { }\n" +
                 "  public class Broken : global::" + name + "Dep.IBase { }\n" +
@@ -1381,6 +1382,7 @@ namespace Bam.Tests.Unit
                 name + ".IGen`1[[" + missing + ".Token, " + missing + "]][]",
                 name + ".IPair`2[" + name + ".Local[],[" + missing + ".Token, " + missing + "]]",
                 name + ".IGen`1[" + name + ".Other`1 [System.String]]",
+                name + ".IHold`1[" + name + ".Local[] []]",
             };
 
             After.Setup(reg =>
@@ -1414,6 +1416,9 @@ namespace Bam.Tests.Unit
                 because.ItsTrue("and an array suffix is not read as part of the argument list", Dependency(names[6]) && !Blamed(names[6]), skips);
                 because.ItsTrue("nor is an array of a type the target defines followed into its rank", Dependency(names[7]) && !Blamed(names[7]), skips);
                 because.ItsTrue("whitespace before a nested '[' is reported as such", SkipOf(names[8])?.Reason.Contains("whitespace before '['") == true && !Blamed(names[8]), skips);
+                // The name resolves; IHold<Local[][]> is then refused by the generator, whose identifier for an
+                // array argument is not valid C# (bam.generators#40). Only the resolver's verdict is asserted here.
+                because.ItsTrue("but whitespace between array ranks is accepted, as the runtime accepts it", SkipOf(names[9])?.Reason.Contains("not a type name the runtime accepts") != true && !Dependency(names[9]), skips);
             })
             .SoBeHappy()
             .UnlessItFailed();

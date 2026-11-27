@@ -74,7 +74,9 @@ namespace Bam
 
         // Whitespace between a name and the '[' that opens its argument list or array suffix, at any depth
         // (IGen`1[Svc.Other`1 [System.String]]). The runtime keeps it as part of the name and then finds nothing.
-        // Whitespace after ',' or '[' (IPair`2[[A, X], [B, Y]]) separates arguments and is not reported.
+        // Whitespace after ',' or '[' (IPair`2[[A, X], [B, Y]]) separates arguments, and whitespace after ']'
+        // (IGen`1[Svc.Local[] []], IGen`1[Svc.Local] []) comes before another array rank; the runtime accepts
+        // both, so neither is reported.
         private static bool HasWhitespaceBeforeBracket(string typeName)
         {
             for (int i = 1; i < typeName.Length; i++)
@@ -90,7 +92,7 @@ namespace Bam
                     previous--;
                 }
 
-                if (previous >= 0 && typeName[previous] != ',' && typeName[previous] != '[')
+                if (previous >= 0 && typeName[previous] != ',' && typeName[previous] != '[' && typeName[previous] != ']')
                 {
                     return true;
                 }
