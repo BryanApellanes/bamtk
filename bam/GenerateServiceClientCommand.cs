@@ -28,7 +28,9 @@ namespace Bam
         /// <see cref="BamServiceClientGenerationConfig.OutputDirectory"/> are required.</param>
         /// <returns>The absolute-or-relative path of the generated <c>{ServiceName}Client.cs</c> file.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="config"/> is null.</exception>
-        /// <exception cref="ArgumentException">A required field is missing, or a named type cannot be resolved.</exception>
+        /// <exception cref="ArgumentException">A required field is missing, or a named type cannot be resolved: the
+        /// message says whether the assembly does not define it, defines it but it could not be loaded (with the
+        /// loader's reason), or the runtime refused the name itself.</exception>
         /// <exception cref="FileNotFoundException">The service assembly does not exist at <see cref="BamServiceClientGenerationConfig.AssemblyPath"/>.</exception>
         /// <exception cref="ServiceClientGenerationException">The service type is not a <c>[WebService]</c>, or Subclass mode was requested for a type with non-virtual remotable methods.</exception>
         public string Execute(BamServiceClientGenerationConfig config)
@@ -50,22 +52,27 @@ namespace Bam
             using AssemblyProbe probe = new AssemblyProbe(null);
             Assembly assembly = probe.Load(assemblyFile.FullName);
 
-            Type serviceType = assembly.GetType(config.ServiceTypeName)
-                ?? throw new ArgumentException(
-                    $"Service type '{config.ServiceTypeName}' was not found in assembly '{assemblyFile.FullName}'.");
+            Type serviceType = RequireType(assembly, config.ServiceTypeName, "Service");
 
             Type? interfaceType = null;
             if (config.Mode == GenerationMode.Interface && !string.IsNullOrWhiteSpace(config.InterfaceTypeName))
             {
-                interfaceType = assembly.GetType(config.InterfaceTypeName)
-                    ?? throw new ArgumentException(
-                        $"Interface type '{config.InterfaceTypeName}' was not found in assembly '{assemblyFile.FullName}'.");
+                interfaceType = RequireType(assembly, config.InterfaceTypeName, "Interface");
             }
 
             BamServiceClientGenerator generator = new BamServiceClientGenerator();
             generator.AddServiceType(serviceType, config.Mode, interfaceType).WriteSource(config.OutputDirectory);
 
             return Path.Combine(config.OutputDirectory, $"{serviceType.Name}Client.cs");
+        }
+
+        // Resolved as GenerateDecoratorCommand resolves its names, so a type that is there but cannot be loaded
+        // is reported with the loader's reason, and a name the runtime refuses says so, instead of both reading
+        // as "not found" (bamtk#133).
+        private static Type RequireType(Assembly assembly, string typeName, string role)
+        {
+            TypeResolution resolution = TypeNameResolver.Resolve(assembly, typeName);
+            return resolution.Type ?? throw new ArgumentException(resolution.Reason(role, typeName, assembly));
         }
 
         private static void RequireValue(string value, string name)

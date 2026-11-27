@@ -145,7 +145,8 @@ namespace Bam.Tests.Unit
             .ShouldPass<ClientOutcome>((because, outcome) =>
             {
                 because.ItsTrue("the client is written", outcome.Source.Length > 0, outcome.Path);
-                because.ItsTrue("and uses the dependency's type", outcome.Source.Contains("Token"), outcome.Source.Length > 400 ? outcome.Source.Substring(0, 400) : outcome.Source);
+                // TokenServiceClient alone contains "Token"; the dependency's type is named in full (bamtk#133 item 6).
+                because.ItsTrue("and uses the dependency's type", outcome.Source.Contains("global::" + service.Name + "Dep.Token"), outcome.Source.Length > 400 ? outcome.Source.Substring(0, 400) : outcome.Source);
             })
             .SoBeHappy()
             .UnlessItFailed();
@@ -198,6 +199,123 @@ namespace Bam.Tests.Unit
             .UnlessItFailed();
         }
 
+        [UnitTest(RunSynchronously = true)]
+        public void NotOpenAReferenceNamedAPipe()
+        {
+            // bamtk#133 item 2: a reference named \\.\pipe\<guid>, with pipe servers listening behind it and each
+            // extension a probe might add, turns any open attempt into a connection. The control opens one pipe
+            // directly, so a zero means the command opened nothing.
+            Skip.Unless(PipeOracle.IsSupported, "the named-pipe oracle needs Windows");
+
+            string tag = Guid.NewGuid().ToString("N").Substring(0, 12);
+            string root = TestOutputDir("pipe-" + tag);
+            using PipeOracle oracle = new PipeOracle("bamtk133svc" + tag);
+            using PipeOracle control = new PipeOracle("bamtk133svccontrol" + tag);
+            CompiledWebService service = CompileWebService(root, "Pipe" + tag, oracle.Path);
+
+            When.A<GenerateServiceClientCommand>("generates a client for a target whose dependency's reference name is a pipe", new GenerateServiceClientCommand(), command =>
+            {
+                Exception? thrown = null;
+                try
+                {
+                    command.Execute(new BamServiceClientGenerationConfig
+                    {
+                        AssemblyPath = service.ServicePath,
+                        ServiceTypeName = service.ServiceTypeName,
+                        Mode = GenerationMode.Subclass,
+                        OutputDirectory = Path.Combine(root, "out")
+                    });
+                }
+                catch (Exception ex)
+                {
+                    thrown = ex;
+                }
+
+                File.Exists(control.Path);
+                return new PipeOutcome(thrown, oracle.Connections(TimeSpan.FromMilliseconds(500)), control.Connections(TimeSpan.FromSeconds(5)));
+            })
+            .TheTest
+            .ShouldPass<PipeOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("the control proves an open is seen", outcome.ControlConnections > 0, $"control connections: {outcome.ControlConnections}");
+                because.ItsTrue("the command opened no pipe", outcome.Connections == 0, $"connections: {outcome.Connections}");
+                because.ItsTrue("and fails", outcome.Thrown is not null);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        [UnitTest(RunSynchronously = true)]
+        public void TellAnUnloadableTypeFromAMissingOneAndARejectedName()
+        {
+            // bamtk#133 item 3: GetType(name) without throwOnError reported a type that is there but cannot load
+            // as "not found". The command now resolves as the decorator command does: the service below
+            // implements an interface from a dependency whose build beside it has gained a member.
+            string tag = Guid.NewGuid().ToString("N").Substring(0, 8);
+            string root = TestOutputDir("unloadable-" + tag);
+            string serviceDir = Path.Combine(root, "svc");
+            string buildDir = Path.Combine(root, "build");
+            Directory.CreateDirectory(serviceDir);
+            Directory.CreateDirectory(buildDir);
+            string dependencyName = "Grown" + tag + "Dep";
+            string serviceName = "Grown" + tag + "Svc";
+            RoslynCompiler compiler = new RoslynCompiler();
+            string oldDependency = Path.Combine(buildDir, dependencyName + ".dll");
+            File.WriteAllBytes(oldDependency, compiler.Compile(dependencyName, "namespace " + dependencyName + " { public interface IBase { } }"));
+            string servicePath = Path.Combine(serviceDir, serviceName + ".dll");
+            File.WriteAllBytes(servicePath, compiler.Compile(serviceName,
+                "namespace " + serviceName + " {\n" +
+                "  [global::Bam.Server.WebService]\n" +
+                "  public class TokenService : global::" + dependencyName + ".IBase { public virtual string Make(string value) { return value; } }\n" +
+                "  public class Plain { }\n" +
+                "}\n",
+                () => compiler.MetadataReferenceResolver.GetMetaDataReferences()
+                    .Concat(new MetadataReference[] { MetadataReference.CreateFromFile(oldDependency), MetadataReference.CreateFromFile(typeof(WebServiceAttribute).Assembly.Location) })
+                    .ToArray()));
+            File.WriteAllBytes(Path.Combine(serviceDir, dependencyName + ".dll"), compiler.Compile(dependencyName,
+                "namespace " + dependencyName + " { public interface IBase { void Added(); } }"));
+
+            When.A<GenerateServiceClientCommand>("is given a service type that cannot load, one that is not there, and a refused name", new GenerateServiceClientCommand(), command =>
+            {
+                string Fail(string typeName)
+                {
+                    try
+                    {
+                        command.Execute(new BamServiceClientGenerationConfig
+                        {
+                            AssemblyPath = servicePath,
+                            ServiceTypeName = typeName,
+                            Mode = GenerationMode.Subclass,
+                            OutputDirectory = Path.Combine(root, "out")
+                        });
+                        return "no exception";
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        return ex.Message;
+                    }
+                }
+
+                return new ResolutionOutcome(
+                    Fail(serviceName + ".TokenService"),
+                    Fail(serviceName + ".NoSuchService"),
+                    Fail(serviceName + ".Plain[[System.String, System.Private.CoreLib]]"));
+            })
+            .TheTest
+            .ShouldPass<ResolutionOutcome>((because, outcome) =>
+            {
+                because.ItsTrue("the unloadable type is reported with the loader's reason", outcome.Unloadable.Contains("could not be loaded") && outcome.Unloadable.Contains("Added") && !outcome.Unloadable.Contains("was not found"), outcome.Unloadable);
+                because.ItsTrue("a missing type is still not found", outcome.Missing.Contains("was not found"), outcome.Missing);
+                because.ItsTrue("a refused name says so", outcome.Rejected.Contains("not a type name the runtime accepts"), outcome.Rejected);
+            })
+            .SoBeHappy()
+            .UnlessItFailed();
+        }
+
+        private sealed record PipeOutcome(Exception? Thrown, int Connections, int ControlConnections);
+
+        private sealed record ResolutionOutcome(string Unloadable, string Missing, string Rejected);
+
         // Compiles {name}Dep.dll (a Token class) and {name}Svc.dll (a [WebService] whose virtual method returns a
         // Token) into <root>/svc. With escapeTo, the service's reference to the dependency is renamed to that path
         // and a dependency named after its last segment is written under <root>/outside, where the path leads.
@@ -226,6 +344,11 @@ namespace Bam.Tests.Unit
             if (escapeTo is not null)
             {
                 ReferenceNamePatcher.Rename(image, dependencyName, escapeTo);
+            }
+
+            // A device path (a pipe) has no directory to write a waiting dependency into.
+            if (escapeTo is not null && !escapeTo.StartsWith(@"\\", StringComparison.Ordinal))
+            {
                 string leaf = escapeTo.Substring(escapeTo.LastIndexOfAny(new char[] { '/', '\\' }) + 1);
                 string outside = Path.GetFullPath(Path.Combine(serviceDir, escapeTo.Substring(0, escapeTo.Length - leaf.Length)));
                 Directory.CreateDirectory(outside);
@@ -234,10 +357,10 @@ namespace Bam.Tests.Unit
 
             string servicePath = Path.Combine(serviceDir, serviceName + ".dll");
             File.WriteAllBytes(servicePath, image);
-            return new CompiledWebService(servicePath, serviceName + ".TokenService");
+            return new CompiledWebService(servicePath, serviceName + ".TokenService", name);
         }
 
-        private sealed record CompiledWebService(string ServicePath, string ServiceTypeName);
+        private sealed record CompiledWebService(string ServicePath, string ServiceTypeName, string Name);
 
         private sealed record ClientOutcome(string Path, string Source, Exception? Thrown, string[] LoadedFromOutside);
 
