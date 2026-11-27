@@ -150,8 +150,9 @@ jobs:
             [ -f "$dir/$name.dll" ] || { echo "::error::$name: $name.dll not found in its output directory"; status=1; continue; }
             found=$((found + 1))
             log="$RUNNER_TEMP/$name.log"
-            (cd "$dir" && dotnet "$name.dll" --ut) > "$log" 2>&1
-            code=$?
+            # Actions runs this under `bash -e`; capture the exit so a failing run is reported and the rest still run.
+            code=0
+            (cd "$dir" && dotnet "$name.dll" --ut) > "$log" 2>&1 || code=$?
             summary=$(grep -oE 'Test Summary: [0-9]+ passed, [0-9]+ failed, [0-9]+ skipped' "$log" | tail -1 || true)
             echo "$name: ${summary:-no Test Summary line} (exit $code)"
             if [ -z "$summary" ] || [ "$code" -ne 0 ] || ! grep -qE ': [1-9][0-9]* passed, 0 failed' <<< "$summary"; then
