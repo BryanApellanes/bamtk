@@ -1,0 +1,142 @@
+name: framework-test
+
+# Reusable CI for a bam framework repo (bamtk#168, CI plan tier 1).
+#
+# A framework repo can't build on its own: its projects reference siblings by path (..\..\bam.base\...), the layout
+# bamtk's submodules/ directory gives them. This workflow checks out the repo under test and then rebuilds that
+# layout next to it with .github/scripts/sibling_layout.py. Only the siblings the build actually references are
+# fetched, each at the commit bamtk's default branch records for submodules/<name>. No token is used for them, so a
+# private repo in the build graph fails the job by name instead of being fetched.
+#
+# It builds every project in the repo, builds each *tests project into its own output directory (one flat directory
+# lets an older copy of a shared dependency win, bamtk#66), and runs each with --ut. A run fails the job when its
+# "Test Summary" line is missing, reports a failure, or reports no passing test. The exit code alone isn't trusted
+# yet: bam.test#5 makes failures exit non-zero, but a run of zero tests still exits 0 (bam.test#13).
+#
+# Caller, in a framework repo:
+#   on:
+#     pull_request:
+#       branches: [<real branch>]
+#     push:
+#       branches: [<real branch>]
+#   permissions:
+#     contents: read
+#   jobs:
+#     test:
+#       uses: BryanApellanes/bamtk/.github/workflows/framework-test.yml@bamtk
+
+on:
+  workflow_call:
+    inputs:
+      repo:
+        description: Framework repo to test, under BryanApellanes. Empty means the calling repo at the triggering commit.
+        type: string
+        default: ''
+      ref:
+        description: Commit or branch of `repo` to test. Only used with `repo`; empty means its default branch.
+        type: string
+        default: ''
+      exclude:
+        description: Extended regex; projects whose path (relative to the repo) matches are not built or run.
+        type: string
+        default: ''
+      bamtk-ref:
+        description: bamtk branch whose recorded submodule commits pin the siblings.
+        type: string
+        default: bamtk
+      scripts-ref:
+        description: bamtk commit or branch to take sibling_layout.py from.
+        type: string
+        default: bamtk
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-test:
+    name: build and unit test (${{ inputs.repo || github.event.repository.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      REPO: ${{ inputs.repo || github.event.repository.name }}
+      EXCLUDE: ${{ inputs.exclude }}
+      BAMTK_REF: ${{ inputs.bamtk-ref }}
+    steps:
+      - name: Check out the repo under test
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.repo && format('BryanApellanes/{0}', inputs.repo) || github.repository }}
+          ref: ${{ inputs.repo && inputs.ref || '' }}
+          path: ${{ inputs.repo || github.event.repository.name }}
+          persist-credentials: false
+
+      - name: Check out bamtk's CI scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: BryanApellanes/bamtk
+          ref: ${{ inputs.scripts-ref }}
+          path: .bamtk-ci
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
+      - name: Fetch sibling framework repos at the commits bamtk records
+        run: python3 .bamtk-ci/.github/scripts/sibling_layout.py "$REPO" "$BAMTK_REF"
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: |
+          set -euo pipefail
+          mapfile -t projects < <(cd "$REPO" && find . -name '*.csproj' -not -path '*/bin/*' -not -path '*/obj/*' | sed 's#^\./##' | sort)
+          if [ -n "$EXCLUDE" ]; then
+            mapfile -t projects < <(printf '%s\n' "${projects[@]}" | grep -Ev -- "$EXCLUDE" || true)
+          fi
+          [ "${#projects[@]}" -gt 0 ] && [ -n "${projects[0]}" ] || { echo "::error::no projects to build in $REPO"; exit 1; }
+          tests=0
+          for project in "${projects[@]}"; do
+            name=$(basename "$project" .csproj)
+            if [[ "$name" == *tests ]]; then
+              echo "::group::build $project -> tests/$name"
+              dotnet build "$REPO/$project" -c Debug --output "$RUNNER_TEMP/tests/$name"
+              tests=$((tests + 1))
+            else
+              echo "::group::build $project"
+              dotnet build "$REPO/$project" -c Debug
+            fi
+            echo "::endgroup::"
+          done
+          echo "built ${#projects[@]} project(s), $tests test project(s)"
+
+      - name: Unit tests
+        env:
+          BAM_ARG_STYLE: Posix
+        run: |
+          set -uo pipefail
+          status=0
+          found=0
+          for dir in "$RUNNER_TEMP"/tests/*/; do
+            [ -d "$dir" ] || continue
+            name=$(basename "$dir")
+            [ -f "$dir/$name.dll" ] || { echo "::error::$name: $name.dll not found in its output directory"; status=1; continue; }
+            found=$((found + 1))
+            log="$RUNNER_TEMP/$name.log"
+            (cd "$dir" && dotnet "$name.dll" --ut) > "$log" 2>&1
+            code=$?
+            summary=$(grep -oE 'Test Summary: [0-9]+ passed, [0-9]+ failed, [0-9]+ skipped' "$log" | tail -1 || true)
+            echo "$name: ${summary:-no Test Summary line} (exit $code)"
+            if [ -z "$summary" ] || [ "$code" -ne 0 ] || ! grep -qE ': [1-9][0-9]* passed, 0 failed' <<< "$summary"; then
+              echo "::error::$name: ${summary:-no Test Summary line}, exit $code"
+              grep -E ' failed *$' "$log" | sed -E 's/^.*(Testing when)/\1/' | head -40 || true
+              [ -n "$summary" ] || tail -60 "$log"
+              status=1
+            fi
+          done
+          [ "$found" -gt 0 ] || echo "no test projects in $REPO; nothing to run"
+          exit $status
