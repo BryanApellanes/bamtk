@@ -58,9 +58,28 @@ mkdir -p "$ASSEMBLY_DIR"
 echo "Building bamtest..."
 dotnet build "$(to_native "$BAMTEST_PROJECT")" -c Release -v quiet
 
-# Build the solution with output directed to the run directory
-echo "Building solution to $ASSEMBLY_DIR..."
-dotnet build "$(to_native "$SOLUTION")" -c Debug --output "$(to_native "$ASSEMBLY_DIR")" -v quiet
+# Build the whole solution first, so a compile error anywhere fails the run.
+echo "Building solution..."
+dotnet build "$(to_native "$SOLUTION")" -c Debug -v quiet
+
+# Then give every test project its own output directory under the run directory.
+# One flat --output directory let the last copy of a shared dependency win: an older
+# Microsoft.Extensions.Options from Microsoft.Data.SqlClient overwrote the 10.0 copy
+# that the Microsoft.Extensions.Logging 10 consumers need, so their tests failed at
+# load time (bamtk#66). A directory per project keeps each one's resolved dependency
+# set intact. bamtest's --assemblyDir discovery searches subdirectories, so it still
+# finds every *tests.dll under $ASSEMBLY_DIR.
+echo "Building test projects to $ASSEMBLY_DIR/<project>..."
+TEST_PROJECTS="$(dotnet sln "$(to_native "$SOLUTION")" list | tr '\\' '/' | grep -E 'tests\.csproj$' || true)"
+if [ -z "$TEST_PROJECTS" ]; then
+    echo "ERROR: no *tests.csproj projects found in $SOLUTION" >&2
+    exit 1
+fi
+while IFS= read -r TEST_PROJECT; do
+    PROJECT_NAME="$(basename "$TEST_PROJECT" .csproj)"
+    dotnet build "$(to_native "$SCRIPT_DIR/$TEST_PROJECT")" -c Debug \
+        --output "$(to_native "$ASSEMBLY_DIR/$PROJECT_NAME")" -v quiet
+done <<< "$TEST_PROJECTS"
 
 # Determine the bamtest executable
 if [ -f "${BAMTEST_BIN}.exe" ]; then
