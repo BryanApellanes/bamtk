@@ -1,0 +1,27 @@
+name: framework-test self-test
+
+# Runs the reusable framework-test workflow from this commit against the pilot repos, so a change to it (or to
+# sibling_layout.py) is proven on a bamtk PR before any framework repo calls it. bamtk#168.
+
+on:
+  pull_request:
+    branches: [bamtk]
+    paths:
+      - .github/workflows/framework-test.yml
+      - .github/workflows/framework-test-selftest.yml
+      - .github/scripts/sibling_layout.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pilot:
+    strategy:
+      fail-fast: false
+      matrix:
+        repo: [bam.base, bam.encryption]
+    uses: ./.github/workflows/framework-test.yml
+    with:
+      repo: ${{ matrix.repo }}
+      scripts-ref: ${{ github.sha }}
